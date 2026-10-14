@@ -195,7 +195,7 @@ export async function eliminarTienda(tiendaId: string, confirmacion: string) {
   for (const u of usuarios ?? []) await admin.auth.admin.deleteUser(u.user_id)
   // 2) fotos
   const { data: archivos } = await admin.storage.from('productos').list(tiendaId, { limit: 1000 })
-  if (archivos?.length) await admin.storage.from('productos').remove(archivos.map((a) => `${tiendaId}/${a.name}`))
+  if (archivos?.length) await admin.storage.from('productos').remove(archivos.map((a: { name: string }) => `${tiendaId}/${a.name}`))
   // 3) la tienda (borra en cascada productos, ventas y visitas)
   await admin.from('tiendas').delete().eq('id', tiendaId)
   revalidatePath('/admin')
