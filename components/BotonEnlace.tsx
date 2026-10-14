@@ -4,13 +4,15 @@ import { useState, useTransition } from 'react'
 import { enlaceAcceso, type Resultado } from '@/app/admin/actions'
 import AccesoCard from './AccesoCard'
 
-export default function BotonEnlace({ tiendaId, userId, texto }: { tiendaId: string; userId: string; texto: string }) {
+export default function BotonEnlace({ tiendaId, userId, texto, accion }: {
+  tiendaId?: string; userId: string; texto: string; accion?: () => Promise<Resultado>
+}) {
   const [res, setRes] = useState<Resultado>(null)
   const [pend, start] = useTransition()
   return (
     <>
       <button type="button" className="btn-borde btn-sm" disabled={pend}
-        onClick={() => start(async () => setRes(await enlaceAcceso(tiendaId, userId)))}>
+        onClick={() => start(async () => setRes(accion ? await accion() : await enlaceAcceso(tiendaId ?? '', userId)))}>
         {pend ? 'Generando…' : texto}
       </button>
       {res && (

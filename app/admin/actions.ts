@@ -6,7 +6,8 @@ import { requireAdmin } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { configDeRubro, CAMPOS_EXTRA, RUBROS, type CampoExtra } from '@/lib/rubros'
 import { esPlan, PLANES } from '@/lib/planes'
-import { PANEL_URL, prefijoDe, prefijoValido, slugify, soloDigitos } from '@/lib/utils'
+import { prefijoDe, prefijoValido, slugify, soloDigitos } from '@/lib/utils'
+import { generarEnlace } from '@/lib/accesos'
 
 export type Acceso = {
   ok: true
@@ -18,22 +19,13 @@ export type Acceso = {
   whatsapp: string
   enlace: string
   tipo: 'invitacion' | 'clave'
+  urlPublica?: string     // invitación del evento (si no, se usa la tienda)
+  etiquetaPublica?: string
+  esEvento?: boolean
 }
 export type Resultado = Acceso | { ok: false; error: string } | null
 
 const correoValido = (c: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)
-
-// Genera un enlace de un solo uso que lleva a /crear-clave
-async function generarEnlace(correo: string, tipo: 'invite' | 'recovery') {
-  const admin = createAdminClient()
-  const { data, error } = await admin.auth.admin.generateLink({ type: tipo, email: correo })
-  if (error || !data.properties) throw new Error(error?.message || 'No se pudo generar el enlace')
-  const { hashed_token, verification_type } = data.properties
-  return {
-    userId: data.user.id,
-    enlace: `${PANEL_URL}/auth/confirm?token_hash=${hashed_token}&type=${verification_type}&next=/crear-clave`,
-  }
-}
 
 export async function crearTienda(_prev: Resultado, form: FormData): Promise<Resultado> {
   const { supabase } = await requireAdmin()
@@ -72,7 +64,7 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
     const msg = error?.message || ''
     return { ok: false, error: error?.code === '23505'
       ? (msg.includes('prefijo') ? `El prefijo ${prefijo} ya está en uso.` : `La dirección ${slug} ya está en uso.`)
-      : 'No se pudo crear la tienda.' }
+      : `No se pudo crear la tienda: ${msg || 'error desconocido'}` }
   }
 
   try {
@@ -85,7 +77,7 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
   } catch (e) {
     await supabase.from('tiendas').delete().eq('id', tienda.id)
     const m = e instanceof Error ? e.message : ''
-    return { ok: false, error: /registered|exists/i.test(m) ? 'Ese correo ya tiene un usuario. Usa otro.' : 'No se pudo crear el usuario del dueño.' }
+    return { ok: false, error: /registered|exists/i.test(m) ? 'Ese correo ya tiene un usuario. Usa otro.' : `No se pudo crear el usuario del dueño: ${m}` }
   }
 }
 
@@ -151,7 +143,7 @@ export async function registrarPago(tiendaId: string) {
   const base = new Date(Math.max(new Date(t.vence_el).getTime(), hoy.getTime()))
   base.setMonth(base.getMonth() + 1)
   await supabase.from('tiendas').update({ vence_el: base.toISOString().slice(0, 10) }).eq('id', tiendaId)
-  revalidatePath('/admin'); revalidatePath(`/admin/tiendas/${tiendaId}`)
+  revalidatePath('/admin', 'layout')
 }
 
 export async function cambiarPlan(tiendaId: string, form: FormData) {
@@ -159,7 +151,7 @@ export async function cambiarPlan(tiendaId: string, form: FormData) {
   const plan = String(form.get('plan'))
   if (!esPlan(plan)) return
   await supabase.from('tiendas').update({ plan }).eq('id', tiendaId)
-  revalidatePath('/admin'); revalidatePath(`/admin/tiendas/${tiendaId}`)
+  revalidatePath('/admin', 'layout')
 }
 
 export async function actualizarDatos(tiendaId: string, form: FormData) {
@@ -201,7 +193,7 @@ export async function guardarConfig(tiendaId: string, form: FormData) {
 export async function suspender(tiendaId: string, valor: boolean) {
   const { supabase } = await requireAdmin()
   await supabase.from('tiendas').update({ suspendida: valor }).eq('id', tiendaId)
-  revalidatePath('/admin'); revalidatePath(`/admin/tiendas/${tiendaId}`)
+  revalidatePath('/admin', 'layout')
 }
 
 export async function eliminarTienda(tiendaId: string, confirmacion: string) {
@@ -219,6 +211,6 @@ export async function eliminarTienda(tiendaId: string, confirmacion: string) {
   if (archivos?.length) await admin.storage.from('productos').remove(archivos.map((a: { name: string }) => `${tiendaId}/${a.name}`))
   // 3) la tienda (borra en cascada productos, ventas y visitas)
   await admin.from('tiendas').delete().eq('id', tiendaId)
-  revalidatePath('/admin')
-  redirect('/admin')
+  revalidatePath('/admin'); revalidatePath('/admin/tiendas')
+  redirect('/admin/tiendas')
 }

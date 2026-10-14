@@ -74,7 +74,7 @@ export default function RegistrarVenta({ tiendaId, prefijo, productos, usaOferta
   const opciones = (k: 'canal' | 'pago' | 'estado' | 'entrega', ops: string[]) => (
     <div className="flex flex-wrap gap-2">{ops.map((o) => (
       <button type="button" key={o} onClick={() => setD({ ...d, [k]: o })}
-        className={`rounded-lg border px-3 py-1.5 text-sm ${d[k] === o ? 'border-primario bg-primario text-[#06201a]' : 'border-linea bg-sup2'}`}>{o}</button>
+        className={`rounded-lg border px-3 py-1.5 text-sm ${d[k] === o ? 'border-primario bg-primario text-sobreprimario' : 'border-linea bg-sup2'}`}>{o}</button>
     ))}</div>
   )
 

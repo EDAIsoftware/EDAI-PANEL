@@ -105,7 +105,7 @@ export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, pr
     router.push('/panel/productos'); router.refresh()
   }
 
-  const pastilla = (activo: boolean) => `rounded-lg border px-3 py-1.5 text-sm ${activo ? 'border-primario bg-primario text-[#06201a]' : 'border-linea bg-sup2'}`
+  const pastilla = (activo: boolean) => `rounded-lg border px-3 py-1.5 text-sm ${activo ? 'border-primario bg-primario text-sobreprimario' : 'border-linea bg-sup2'}`
 
   return (
     <div className="max-w-3xl">
@@ -132,10 +132,10 @@ export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, pr
             {p.fotos.map((f, i) => (
               <div key={f} className="relative h-24 w-24 overflow-hidden rounded-lg border border-linea">
                 <img src={f} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
-                {i === 0 && <span className="absolute bottom-1 left-1 rounded bg-acento px-1.5 text-[10.5px] font-bold text-[#06210f]">Principal</span>}
+                {i === 0 && <span className="absolute bottom-1 left-1 rounded bg-acento px-1.5 text-[10.5px] font-bold text-sobreacento">Principal</span>}
                 <div className="absolute right-1 top-1 flex gap-1">
-                  {i > 0 && <button type="button" aria-label="Hacer principal" className="h-6 w-6 rounded bg-black/65 text-xs" onClick={() => set('fotos', [f, ...p.fotos.filter((x) => x !== f)])}>★</button>}
-                  <button type="button" aria-label="Quitar foto" className="h-6 w-6 rounded bg-black/65 text-xs" onClick={() => quitarFoto(f)}>✕</button>
+                  {i > 0 && <button type="button" aria-label="Hacer principal" className="h-6 w-6 rounded bg-black/65 text-xs text-white" onClick={() => set('fotos', [f, ...p.fotos.filter((x) => x !== f)])}>★</button>}
+                  <button type="button" aria-label="Quitar foto" className="h-6 w-6 rounded bg-black/65 text-xs text-white" onClick={() => quitarFoto(f)}>✕</button>
                 </div>
               </div>
             ))}

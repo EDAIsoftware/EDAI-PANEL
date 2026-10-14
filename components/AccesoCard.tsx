@@ -20,10 +20,13 @@ function Fila({ etq, valor, destacar }: { etq: string; valor: string; destacar?:
 }
 
 export default function AccesoCard({ a, onCerrar }: { a: Acceso; onCerrar?: () => void }) {
-  const tienda = urlTienda(a.slug)
+  const tienda = a.urlPublica ?? urlTienda(a.slug)
+  const etq = a.etiquetaPublica ?? 'Su tienda'
   const msg = a.tipo === 'clave'
     ? `Hola ${a.nombre}, para crear tu nueva contraseña del panel de ${a.tienda} entra aquí:\n${a.enlace}\n\nEl enlace sirve una sola vez.`
-    : `Hola ${a.nombre}, ¡bienvenido a EDAI! 🎉\n\nTu tienda ${a.tienda} ya está lista.\n\n1. Crea tu contraseña aquí: ${a.enlace}\n2. Tu usuario es: ${a.correo}\n3. Después entra siempre a tu panel en: ${PANEL_URL}\n\nTu tienda para compartir con tus clientes: ${tienda}\n\nCualquier duda, escríbenos por aquí.`
+    : a.esEvento
+      ? `Hola ${a.nombre}, ¡bienvenido a EDAI! 💌\n\nTu invitación "${a.tienda}" ya está lista.\n\n1. Crea tu contraseña aquí: ${a.enlace}\n2. Tu usuario es: ${a.correo}\n3. En tu panel ${PANEL_URL} puedes editar tu invitación, cargar tu lista de invitados y ver quién confirma.\n\nTu invitación: ${tienda}\n\nCualquier duda, escríbenos por aquí.`
+      : `Hola ${a.nombre}, ¡bienvenido a EDAI! 🎉\n\nTu tienda ${a.tienda} ya está lista.\n\n1. Crea tu contraseña aquí: ${a.enlace}\n2. Tu usuario es: ${a.correo}\n3. Después entra siempre a tu panel en: ${PANEL_URL}\n\nTu tienda para compartir con tus clientes: ${tienda}\n\nCualquier duda, escríbenos por aquí.`
 
   return (
     <div className="caja border-acento p-5">
@@ -32,7 +35,7 @@ export default function AccesoCard({ a, onCerrar }: { a: Acceso; onCerrar?: () =
       <div className="mt-4 flex flex-col gap-2.5">
         <Fila etq="Usuario" valor={a.correo} />
         <Fila etq={a.tipo === 'clave' ? 'Enlace para nueva contraseña' : 'Enlace para crear su contraseña'} valor={a.enlace} destacar />
-        {a.tipo !== 'clave' && <><Fila etq="Su panel" valor={PANEL_URL} /><Fila etq="Su tienda" valor={tienda} /></>}
+        {a.tipo !== 'clave' && <><Fila etq="Su panel" valor={PANEL_URL} /><Fila etq={etq} valor={tienda} /></>}
       </div>
       <p className="mt-3 text-[13px] text-suave">El enlace sirve una sola vez y vence en 24 horas. Si vence, genera otro.</p>
       <div className="mt-4 flex flex-wrap gap-2">

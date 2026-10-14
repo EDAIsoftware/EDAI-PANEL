@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 
 export type Perfil = {
   user_id: string
-  rol: 'admin' | 'dueno' | 'empleado'
+  rol: 'admin' | 'dueno' | 'empleado' | 'evento'
   tienda_id: string | null
+  evento_id: string | null
   nombre: string | null
   correo: string | null
   activo: boolean
@@ -26,6 +27,14 @@ export async function requireAdmin() {
 
 export async function requireTienda() {
   const s = await getSesion()
+  if (s.perfil?.evento_id && !s.perfil.tienda_id) redirect('/panel/evento')
   if (!s.user || !s.perfil || !s.perfil.tienda_id || !s.perfil.activo) redirect('/login')
   return s as typeof s & { user: NonNullable<typeof s.user>; perfil: Perfil & { tienda_id: string } }
+}
+
+export async function requireEvento() {
+  const s = await getSesion()
+  if (s.perfil?.tienda_id && !s.perfil.evento_id) redirect('/panel')
+  if (!s.user || !s.perfil || !s.perfil.evento_id || !s.perfil.activo) redirect('/login')
+  return s as typeof s & { user: NonNullable<typeof s.user>; perfil: Perfil & { evento_id: string } }
 }

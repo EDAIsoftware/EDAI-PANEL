@@ -2,24 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+/* Paletas del panel: verde (EDAI), negro, blanco y rosado */
+:root, [data-paleta='verde'] {
+  color-scheme: dark;
+  --c-fondo: 15 26 23;
+  --c-lateral: 19 36 32;
+  --c-sup: 21 35 31;
+  --c-sup2: 26 43 38;
+  --c-linea: 36 55 47;
+  --c-tinta: 232 241 236;
+  --c-suave: 143 166 155;
+  --c-acento: 34 197 94;
+  --c-sobreacento: 6 33 15;
+  --c-primario: 95 184 160;
+  --c-sobreprimario: 6 32 26;
+  --c-chip: 28 59 44;
+  --c-chiptinta: 125 220 163;
+  --c-malo: 242 112 107;
+  --c-malofondo: 58 28 27;
+  --c-aviso: 245 184 74;
+  --c-avisofondo: 58 46 20;
+}
+[data-paleta='negro'] {
+  color-scheme: dark;
+  --c-fondo: 0 0 0;
+  --c-lateral: 10 10 10;
+  --c-sup: 17 17 17;
+  --c-sup2: 24 24 24;
+  --c-linea: 38 38 38;
+  --c-tinta: 245 245 245;
+  --c-suave: 163 163 163;
+  --c-acento: 255 255 255;
+  --c-sobreacento: 0 0 0;
+  --c-primario: 255 255 255;
+  --c-sobreprimario: 0 0 0;
+  --c-chip: 31 31 31;
+  --c-chiptinta: 229 229 229;
+  --c-malo: 242 112 107;
+  --c-malofondo: 58 28 27;
+  --c-aviso: 245 184 74;
+  --c-avisofondo: 58 46 20;
+}
+[data-paleta='blanco'] {
+  color-scheme: light;
+  --c-fondo: 246 246 243;
+  --c-lateral: 255 255 255;
+  --c-sup: 255 255 255;
+  --c-sup2: 250 250 248;
+  --c-linea: 228 228 223;
+  --c-tinta: 27 27 27;
+  --c-suave: 107 107 102;
+  --c-acento: 27 27 27;
+  --c-sobreacento: 255 255 255;
+  --c-primario: 27 27 27;
+  --c-sobreprimario: 255 255 255;
+  --c-chip: 239 239 234;
+  --c-chiptinta: 47 47 47;
+  --c-malo: 192 57 43;
+  --c-malofondo: 253 226 225;
+  --c-aviso: 154 100 0;
+  --c-avisofondo: 253 240 213;
+}
+[data-paleta='rosado'] {
+  color-scheme: light;
+  --c-fondo: 255 244 247;
+  --c-lateral: 255 233 240;
+  --c-sup: 255 255 255;
+  --c-sup2: 255 248 250;
+  --c-linea: 246 207 220;
+  --c-tinta: 59 29 42;
+  --c-suave: 138 90 108;
+  --c-acento: 224 69 123;
+  --c-sobreacento: 255 255 255;
+  --c-primario: 224 69 123;
+  --c-sobreprimario: 255 255 255;
+  --c-chip: 253 225 234;
+  --c-chiptinta: 179 40 90;
+  --c-malo: 192 57 43;
+  --c-malofondo: 253 226 225;
+  --c-aviso: 154 100 0;
+  --c-avisofondo: 253 240 213;
+}
 body { @apply bg-fondo text-tinta antialiased; }
 
 @layer components {
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed; }
-  .btn-primario { @apply btn bg-primario text-[#06201a] hover:brightness-110; }
+  .btn-primario { @apply btn bg-primario text-sobreprimario hover:brightness-110; }
   .btn-borde { @apply btn border border-linea text-tinta hover:bg-sup2; }
-  .btn-wa { @apply btn bg-acento text-[#06210f] hover:brightness-110; }
-  .btn-peligro { @apply btn bg-malo text-[#2a0d0c]; }
+  .btn-wa { @apply btn bg-[#22c55e] text-[#06210f] hover:brightness-110; }
+  .btn-peligro { @apply btn bg-malo text-white; }
   .btn-sm { @apply px-3 py-1.5 text-sm; }
   .caja { @apply rounded-xl border border-linea bg-sup; }
   .campo { @apply w-full rounded-lg border border-linea bg-sup2 px-3 py-2.5 text-tinta placeholder:text-suave/70 focus:outline-none focus:ring-2 focus:ring-acento; }
   .etiqueta { @apply mb-1.5 block text-[13px] font-semibold text-suave; }
   .chip { @apply inline-block whitespace-nowrap rounded-md bg-chip px-2.5 py-0.5 text-[12.5px] font-bold text-chiptinta; }
-  .chip-aviso { @apply chip bg-[#3a2e14] text-aviso; }
-  .chip-malo { @apply chip bg-[#3a1c1b] text-malo; }
+  .chip-aviso { @apply chip bg-avisofondo text-aviso; }
+  .chip-malo { @apply chip bg-malofondo text-malo; }
   .titulo { @apply text-3xl font-extrabold tracking-tight sm:text-4xl; }
   .subtitulo { @apply mt-1.5 mb-6 text-suave; }
 }
 
-:focus-visible { outline: 2px solid #22c55e; outline-offset: 2px; }
+:focus-visible { outline: 2px solid rgb(var(--c-acento)); outline-offset: 2px; }
+html { scroll-behavior: smooth; }

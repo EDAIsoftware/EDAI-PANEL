@@ -51,7 +51,7 @@ function Formulario() {
 
   return (
     <form onSubmit={modo === 'entrar' ? entrar : recuperar} className="caja w-full max-w-sm p-7">
-      <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-acento font-extrabold text-[#06210f]">ED</div>
+      <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-acento font-extrabold text-sobreacento">ED</div>
       <h1 className="text-2xl font-extrabold">{modo === 'entrar' ? 'Entra a tu panel' : 'Recupera tu acceso'}</h1>
       <p className="mt-1 text-sm text-suave">
         {modo === 'entrar' ? 'Tiendas EDAI' : 'Te enviamos un enlace para crear una contraseña nueva.'}

@@ -6,6 +6,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
     admin.edaisoftware.com      → /admin   (tu panel maestro)
     panel.edaisoftware.com      → /panel   (panel de los dueños)
     chavela.edaisoftware.com    → /t/chavela (tienda pública)
+    invitaciones.edaisoftware.com/ana-y-luis → /i/ana-y-luis (invitación digital)
     www.dominiopropio.com       → /t/www.dominiopropio.com (tienda con dominio propio)
   En tu computadora entras directo: localhost:3000/admin, /panel o /t/chavela
 */
@@ -19,6 +20,7 @@ function destino(host: string, path: string): { ruta: string | null; esTienda: b
 
   if (host === `admin.${ROOT}`) return { ruta: path.startsWith('/admin') ? null : `/admin${sufijo}`, esTienda: false }
   if (host === `panel.${ROOT}`) return { ruta: path.startsWith('/panel') ? null : `/panel${sufijo}`, esTienda: false }
+  if (host === `invitaciones.${ROOT}`) return { ruta: path.startsWith('/i/') ? null : `/i${sufijo}`, esTienda: true }
 
   if (host.endsWith(`.${ROOT}`)) {
     const sub = host.slice(0, -(ROOT.length + 1))

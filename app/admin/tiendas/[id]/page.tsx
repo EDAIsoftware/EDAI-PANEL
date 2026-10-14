@@ -37,7 +37,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-4xl">
-      <Link href="/admin" className="text-sm text-suave underline">← Tiendas</Link>
+      <Link href="/admin/tiendas" className="text-sm text-suave underline">← Tiendas</Link>
       <div className="mt-3 flex flex-wrap items-start gap-3">
         <span className="text-4xl">{RUBROS[t.rubro]?.e ?? '🏪'}</span>
         <div className="flex-1">

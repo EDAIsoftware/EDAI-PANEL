@@ -16,7 +16,7 @@ export default function EstadoVenta({ id, estado, telefono, cliente, resumen, to
   return (
     <>
       <select aria-label="Estado del pedido" value={e}
-        className={`rounded-md border-0 px-2 py-1 text-[12.5px] font-bold ${destacado ? 'bg-acento text-[#06210f]' : 'bg-chip text-chiptinta'}`}
+        className={`rounded-md border-0 px-2 py-1 text-[12.5px] font-bold ${destacado ? 'bg-acento text-sobreacento' : 'bg-chip text-chiptinta'}`}
         onChange={async (ev) => {
           const nuevo = ev.target.value; setE(nuevo)
           const { error } = await createClient().from('ventas').update({ estado: nuevo }).eq('id', id)

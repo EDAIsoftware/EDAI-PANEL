@@ -7,6 +7,7 @@ Plataforma de tiendas online que EDAI alquila a negocios. Un solo proyecto con t
 | `admin.edaisoftware.com` | Panel maestro de EDAI (solo tú) |
 | `panel.edaisoftware.com` | Panel de los dueños de tienda (cada uno ve solo la suya) |
 | `nombre.edaisoftware.com` | Tienda pública de cada cliente |
+| `invitaciones.edaisoftware.com/ana-y-luis` | Invitación digital de cada evento |
 
 Hecho con Next.js 15 + Supabase, desplegado en Vercel.
 
@@ -115,9 +116,22 @@ lib/planes.ts            planes y límites (los límites reales los hace cumplir
 
 **Tiendas con diseño a medida:** reemplazan el archivo `app/t/[slug]/Tienda.tsx` (o usan una plantilla por rubro) y siguen usando las mismas funciones `tienda_publica` y `crear_pedido`.
 
+## Invitaciones digitales
+
+- Tú creas el evento en **Panel maestro → Nueva invitación** y le mandas el acceso al cliente.
+- El cliente entra al mismo `panel.edaisoftware.com`: edita su invitación (textos, lugares, fotos, regalos, música), carga su lista de invitados con pases por familia y ve quién confirma.
+- Cada familia recibe su enlace personal (`…/ana-y-luis?p=código`) y no puede confirmar más personas que sus pases.
+- Planes de pago único (Esencial, Completa, Premium) en la tabla `planes_evento`.
+- Requiere las migraciones `supabase/migracion-003-invitaciones.sql` y `supabase/migracion-004-apariencia-y-planes.sql`, y la variable `NEXT_PUBLIC_INVITACIONES_URL`.
+
+## Orden de las migraciones
+
+`schema.sql` → `migracion-002-codigos.sql` → `migracion-003-invitaciones.sql` → `migracion-004-apariencia-y-planes.sql`. Todas se pueden volver a ejecutar sin romper nada.
+
 ## Pendiente para las siguientes versiones
 
 - Verificación en dos pasos para tu cuenta de admin (Supabase MFA). **Actívala antes de tener muchos clientes.**
 - Sección Apariencia del dueño (logo y colores) y plantillas de tienda por rubro.
 - Métricas avanzadas del panel maestro (oportunidades, clientes en riesgo).
 - Límite de pedidos por minuto en las tiendas públicas para frenar abusos.
+- QR de entrada por invitado para controlar el ingreso al salón.
