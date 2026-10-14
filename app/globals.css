@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body { @apply bg-fondo text-tinta antialiased; }
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primario { @apply btn bg-primario text-[#06201a] hover:brightness-110; }
+  .btn-borde { @apply btn border border-linea text-tinta hover:bg-sup2; }
+  .btn-wa { @apply btn bg-acento text-[#06210f] hover:brightness-110; }
+  .btn-peligro { @apply btn bg-malo text-[#2a0d0c]; }
+  .btn-sm { @apply px-3 py-1.5 text-sm; }
+  .caja { @apply rounded-xl border border-linea bg-sup; }
+  .campo { @apply w-full rounded-lg border border-linea bg-sup2 px-3 py-2.5 text-tinta placeholder:text-suave/70 focus:outline-none focus:ring-2 focus:ring-acento; }
+  .etiqueta { @apply mb-1.5 block text-[13px] font-semibold text-suave; }
+  .chip { @apply inline-block whitespace-nowrap rounded-md bg-chip px-2.5 py-0.5 text-[12.5px] font-bold text-chiptinta; }
+  .chip-aviso { @apply chip bg-[#3a2e14] text-aviso; }
+  .chip-malo { @apply chip bg-[#3a1c1b] text-malo; }
+  .titulo { @apply text-3xl font-extrabold tracking-tight sm:text-4xl; }
+  .subtitulo { @apply mt-1.5 mb-6 text-suave; }
+}
+
+:focus-visible { outline: 2px solid #22c55e; outline-offset: 2px; }

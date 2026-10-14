@@ -1,0 +1,60 @@
+'use client'
+
+import { useActionState, useState } from 'react'
+import Link from 'next/link'
+import { crearTienda, type Resultado } from '../actions'
+import AccesoCard from '@/components/AccesoCard'
+import { RUBROS } from '@/lib/rubros'
+import { PLANES, PLAN_IDS } from '@/lib/planes'
+import { ROOT, bs, slugify } from '@/lib/utils'
+
+export default function NuevaTienda() {
+  const [res, accion, pend] = useActionState<Resultado, FormData>(crearTienda, null)
+  const [nombre, setNombre] = useState('')
+  const [slug, setSlug] = useState('')
+
+  if (res?.ok) {
+    return (
+      <div className="max-w-xl">
+        <h1 className="titulo">{res.tienda} está lista</h1>
+        <p className="subtitulo">Mándale el acceso al dueño. Después puedes ajustar sus productos desde su ficha.</p>
+        <AccesoCard a={res} />
+        <Link href={`/admin/tiendas/${res.tiendaId}`} className="btn-borde mt-4">Ir a la ficha de la tienda</Link>
+      </div>
+    )
+  }
+
+  return (
+    <form action={accion} className="max-w-2xl">
+      <h1 className="titulo">Nueva tienda</h1>
+      <p className="subtitulo">Datos del cliente y del rubro. Al crearla se genera su acceso para mandarlo por WhatsApp.</p>
+      <div className="caja grid gap-4 p-5 sm:grid-cols-2">
+        <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nombre">Nombre de la tienda</label>
+          <input id="nombre" name="nombre" className="campo" required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Ferretería El Tornillo" /></div>
+        <div><label className="etiqueta" htmlFor="dueno">Dueño</label><input id="dueno" name="dueno" className="campo" /></div>
+        <div><label className="etiqueta" htmlFor="whatsapp">WhatsApp</label><input id="whatsapp" name="whatsapp" className="campo" inputMode="tel" defaultValue="591" /></div>
+        <div className="sm:col-span-2"><label className="etiqueta" htmlFor="correo">Correo del dueño (será su usuario)</label>
+          <input id="correo" name="correo" type="email" className="campo" required placeholder="dueno@gmail.com" /></div>
+        <div className="sm:col-span-2"><label className="etiqueta" htmlFor="slug">Dirección de su tienda</label>
+          <div className="flex items-center gap-2"><input id="slug" name="slug" className="campo" value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder={slugify(nombre) || 'nombre-tienda'} />
+          <span className="whitespace-nowrap text-suave">.{ROOT}</span></div></div>
+        <div><label className="etiqueta" htmlFor="ciudad">Ciudad</label><input id="ciudad" name="ciudad" className="campo" defaultValue="Santa Cruz" /></div>
+        <div><label className="etiqueta" htmlFor="plan">Plan</label>
+          <select id="plan" name="plan" className="campo" defaultValue="emprende">
+            {PLAN_IDS.map((p) => <option key={p} value={p}>{PLANES[p].nombre} · {bs(PLANES[p].precio)}/mes</option>)}
+          </select></div>
+        <fieldset className="sm:col-span-2"><legend className="etiqueta">Rubro (define qué campos verá al subir productos)</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {Object.entries(RUBROS).map(([k, r]) => (
+              <label key={k} className="flex cursor-pointer items-center gap-2 rounded-lg border border-linea bg-sup2 p-3 has-[:checked]:border-acento">
+                <input type="radio" name="rubro" value={k} defaultChecked={k === 'general'} className="accent-acento" />
+                <span>{r.e} {r.n}</span>
+              </label>
+            ))}
+          </div></fieldset>
+      </div>
+      {res && !res.ok && <p role="alert" className="mt-3 text-malo">{res.error}</p>}
+      <button className="btn-primario mt-5" disabled={pend}>{pend ? 'Creando…' : 'Crear tienda'}</button>
+    </form>
+  )
+}
