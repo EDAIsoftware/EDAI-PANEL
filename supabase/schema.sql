@@ -34,6 +34,7 @@ create table if not exists public.tiendas (
   id               uuid primary key default gen_random_uuid(),
   nombre           text not null,
   slug             text not null unique check (slug ~ '^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])$'),
+  prefijo          text not null unique check (prefijo ~ '^[A-Z0-9]{2,6}$'), -- códigos de producto: PRE-0001
   dominio          text unique,                       -- dominio propio, ej: www.carniceriachavela.com
   dueno_nombre     text,
   whatsapp         text,
@@ -93,6 +94,8 @@ create table if not exists public.productos (
   unique (tienda_id, numero)
 );
 create index if not exists productos_tienda_idx on public.productos(tienda_id);
+create unique index if not exists productos_codigo_unico
+  on public.productos (tienda_id, lower(codigo)) where codigo is not null and codigo <> '';
 
 -- ---------------------------------------------------------------------
 -- VENTAS y sus productos

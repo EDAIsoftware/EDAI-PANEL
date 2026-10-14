@@ -1,7 +1,7 @@
 // Configuración de productos por rubro. El admin la elige al crear la tienda
 // y puede ajustarla después desde su panel.
 
-export const CAMPOS_BASE = ['nombre', 'precio', 'categoria', 'unidad', 'fotos', 'disponible'] as const
+export const CAMPOS_BASE = ['nombre', 'precio', 'categoria', 'unidad', 'fotos', 'disponible', 'código propio'] as const
 
 export const CAMPOS_EXTRA = {
   descripcion: { t: 'Descripción', d: 'Comentario corto' },
@@ -13,7 +13,6 @@ export const CAMPOS_EXTRA = {
   etiquetas: { t: 'Etiquetas', d: 'Nuevo, picante…' },
   minimo: { t: 'Cantidad mínima', d: 'Ej: 0,5 Kg' },
   peso: { t: 'Peso aproximado', d: 'Piezas enteras' },
-  codigo: { t: 'Código', d: 'Interno o de barras' },
   marca: { t: 'Marca', d: 'Truper, Stanley…' },
 } as const
 
@@ -33,7 +32,7 @@ export const RUBROS: Record<string, Rubro> = {
   carniceria: { e: '🥩', n: 'Carnicería', campos: ['descripcion', 'oferta', 'destacado', 'minimo', 'peso'],
     unidades: ['Kg', 'Pieza entera', 'Pack'], categorias: ['Cortes vacunos', 'Cerdo y aves', 'Embutidos', 'Packs parrilleros'],
     variantes: [], etiquetas: ['Madurado', 'Para parrilla'] },
-  ferreteria: { e: '🔧', n: 'Ferretería', campos: ['descripcion', 'subcategoria', 'stock', 'oferta', 'codigo', 'marca'],
+  ferreteria: { e: '🔧', n: 'Ferretería', campos: ['descripcion', 'subcategoria', 'stock', 'oferta', 'marca'],
     unidades: ['Unidad', 'Metro', 'Caja', 'Kg', 'Bolsa'], categorias: ['Herramientas', 'Electricidad', 'Plomería', 'Pinturas', 'Construcción'],
     variantes: [], etiquetas: [] },
   ropa: { e: '👗', n: 'Ropa y accesorios', campos: ['descripcion', 'stock', 'oferta', 'destacado', 'variantes', 'etiquetas'],
@@ -42,7 +41,7 @@ export const RUBROS: Record<string, Rubro> = {
   comida: { e: '🍔', n: 'Comida', campos: ['descripcion', 'oferta', 'destacado', 'variantes', 'etiquetas'],
     unidades: ['Plato', 'Porción', 'Combo'], categorias: ['Platos', 'Bebidas', 'Postres'],
     variantes: ['Personal', 'Mediana', 'Familiar'], etiquetas: ['Picante', 'Vegetariano', 'Nuevo'] },
-  minimarket: { e: '🛒', n: 'Minimarket', campos: ['subcategoria', 'stock', 'oferta', 'variantes', 'codigo'],
+  minimarket: { e: '🛒', n: 'Minimarket', campos: ['subcategoria', 'stock', 'oferta', 'variantes'],
     unidades: ['Unidad', 'Pack', 'Caja'], categorias: ['Bebidas', 'Abarrotes', 'Limpieza', 'Snacks'],
     variantes: ['500 ml', '1 L', '2 L', '3 L'], etiquetas: [] },
   general: { e: '🏪', n: 'General', campos: ['descripcion', 'oferta'],

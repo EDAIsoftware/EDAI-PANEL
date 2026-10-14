@@ -1,7 +1,18 @@
 export const bs = (n: number | string | null | undefined) =>
   'Bs. ' + Number(n ?? 0).toLocaleString('es-BO', { maximumFractionDigits: 2 })
 
-export const pid = (numero: number) => 'P-' + String(numero).padStart(4, '0')
+// Código EDAI del producto: prefijo de la tienda + número. Ej: CHV-0001. Nunca se repite entre tiendas.
+export const codigoEdai = (prefijo: string | null | undefined, numero: number) =>
+  (prefijo || 'P') + '-' + String(numero).padStart(4, '0')
+
+// Sugiere un prefijo a partir del nombre: iniciales si son varias palabras, o las 3 primeras letras
+export const prefijoDe = (nombre: string) => {
+  const palabras = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, ' ').split(' ').filter((w) => w.length > 0 && !['DE', 'LA', 'EL', 'LOS', 'LAS', 'Y'].includes(w))
+  if (palabras.length >= 2) return palabras.slice(0, 3).map((w) => w[0]).join('')
+  return (palabras[0] || 'TDA').slice(0, 3)
+}
+export const prefijoValido = (p: string) => /^[A-Z0-9]{2,6}$/.test(p)
 
 export const fechaCorta = (f: string | Date) =>
   new Date(f).toLocaleDateString('es-BO', { day: 'numeric', month: 'short', timeZone: 'America/La_Paz' })

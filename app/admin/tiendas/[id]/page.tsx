@@ -42,7 +42,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
         <span className="text-4xl">{RUBROS[t.rubro]?.e ?? '🏪'}</span>
         <div className="flex-1">
           <h1 className="titulo">{t.nombre}</h1>
-          <p className="text-suave">{RUBROS[t.rubro]?.n} · {t.ciudad} · cliente desde {fechaCorta(t.creado_en)}</p>
+          <p className="text-suave">{RUBROS[t.rubro]?.n} · {t.ciudad} · cliente desde {fechaCorta(t.creado_en)} · códigos <b className="text-tinta">{t.prefijo}-0001</b></p>
         </div>
         {t.suspendida ? <span className="chip-malo">Suspendida</span>
           : <span className={d < 0 ? 'chip-malo' : d <= 7 ? 'chip-aviso' : 'chip'}>{d < 0 ? `Vencida hace ${-d} d` : `Hasta ${fechaCorta(t.vence_el)}`}</span>}
@@ -60,7 +60,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-bold">Suscripción</h2>
         <div className="caja flex flex-wrap items-center gap-3 p-4">
-          <form action={cambiarPlan.bind(null, id)} className="flex gap-2">
+          <form key={t.plan} action={cambiarPlan.bind(null, id)} className="flex gap-2">
             <select name="plan" defaultValue={t.plan} className="campo w-auto" aria-label="Plan">
               {PLAN_IDS.map((p) => <option key={p} value={p}>{PLANES[p].nombre} · {bs(PLANES[p].precio)}/mes</option>)}
             </select>
@@ -96,7 +96,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
       <section className="mt-8">
         <h2 className="mb-1 text-lg font-bold">Ajustes de productos</h2>
         <p className="mb-3 text-sm text-suave">Esto es lo único que verá el dueño al subir productos.</p>
-        <form action={cambiarRubro.bind(null, id)} className="caja mb-3 flex flex-wrap items-center gap-2 p-4">
+        <form key={t.rubro} action={cambiarRubro.bind(null, id)} className="caja mb-3 flex flex-wrap items-center gap-2 p-4">
           <label className="etiqueta mb-0 mr-2" htmlFor="rubro">Rubro</label>
           <select id="rubro" name="rubro" defaultValue={t.rubro} className="campo w-auto">
             {Object.entries(RUBROS).map(([k, r]) => <option key={k} value={k}>{r.e} {r.n}</option>)}
@@ -104,8 +104,9 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
           <button className="btn-borde">Aplicar rubro</button>
           <small className="w-full text-suave">Aplicar un rubro reemplaza los campos y listas de abajo por los de ese rubro.</small>
         </form>
-        <form action={guardarConfig.bind(null, id)} className="caja p-4">
-          <p className="etiqueta">Siempre visibles: {CAMPOS_BASE.join(', ')} y número de producto</p>
+        {/* key: al cambiar el rubro o guardar, el formulario se vuelve a dibujar con los valores nuevos */}
+        <form key={JSON.stringify(cfg)} action={guardarConfig.bind(null, id)} className="caja p-4">
+          <p className="etiqueta">Siempre visibles: {CAMPOS_BASE.join(', ')} y código EDAI</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {(Object.keys(CAMPOS_EXTRA) as CampoExtra[]).map((k) => (
               <label key={k} className="flex cursor-pointer items-center gap-3 rounded-lg border border-linea bg-sup2 px-3 py-2">
@@ -127,12 +128,14 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
       {/* DATOS */}
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-bold">Datos del cliente</h2>
-        <form action={actualizarDatos.bind(null, id)} className="caja grid gap-3 p-4 sm:grid-cols-2">
+        <form key={JSON.stringify([t.dueno_nombre, t.whatsapp, t.ciudad, t.dominio, t.prefijo])} action={actualizarDatos.bind(null, id)} className="caja grid gap-3 p-4 sm:grid-cols-2">
           <div><label className="etiqueta" htmlFor="dueno">Dueño</label><input id="dueno" name="dueno" className="campo" defaultValue={t.dueno_nombre ?? ''} /></div>
           <div><label className="etiqueta" htmlFor="whatsapp">WhatsApp</label><input id="whatsapp" name="whatsapp" className="campo" defaultValue={t.whatsapp ?? ''} /></div>
           <div><label className="etiqueta" htmlFor="ciudad">Ciudad</label><input id="ciudad" name="ciudad" className="campo" defaultValue={t.ciudad ?? ''} /></div>
           <div><label className="etiqueta" htmlFor="dominio">Dominio propio (opcional)</label><input id="dominio" name="dominio" className="campo" defaultValue={t.dominio ?? ''} placeholder="www.sutienda.com" /></div>
-          <div><button className="btn-borde">Guardar datos</button></div>
+          <div><label className="etiqueta" htmlFor="prefijo">Prefijo de códigos</label><input id="prefijo" name="prefijo" className="campo uppercase" maxLength={6} defaultValue={t.prefijo ?? ''} />
+            <small className="text-suave">2 a 6 letras o números. Si otra tienda ya lo usa, se mantiene el actual.</small></div>
+          <div className="self-end"><button className="btn-borde">Guardar datos</button></div>
         </form>
       </section>
 

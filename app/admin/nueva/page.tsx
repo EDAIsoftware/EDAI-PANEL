@@ -6,12 +6,13 @@ import { crearTienda, type Resultado } from '../actions'
 import AccesoCard from '@/components/AccesoCard'
 import { RUBROS } from '@/lib/rubros'
 import { PLANES, PLAN_IDS } from '@/lib/planes'
-import { ROOT, bs, slugify } from '@/lib/utils'
+import { ROOT, bs, prefijoDe, slugify } from '@/lib/utils'
 
 export default function NuevaTienda() {
   const [res, accion, pend] = useActionState<Resultado, FormData>(crearTienda, null)
   const [nombre, setNombre] = useState('')
   const [slug, setSlug] = useState('')
+  const [prefijo, setPrefijo] = useState('')
 
   if (res?.ok) {
     return (
@@ -38,6 +39,10 @@ export default function NuevaTienda() {
         <div className="sm:col-span-2"><label className="etiqueta" htmlFor="slug">Dirección de su tienda</label>
           <div className="flex items-center gap-2"><input id="slug" name="slug" className="campo" value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder={slugify(nombre) || 'nombre-tienda'} />
           <span className="whitespace-nowrap text-suave">.{ROOT}</span></div></div>
+        <div className="sm:col-span-2"><label className="etiqueta" htmlFor="prefijo">Prefijo de sus códigos de producto</label>
+          <div className="flex items-center gap-3"><input id="prefijo" name="prefijo" className="campo max-w-[9rem] uppercase" maxLength={6}
+            value={prefijo} onChange={(e) => setPrefijo(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder={prefijoDe(nombre || 'Tienda')} />
+          <span className="text-sm text-suave">Sus productos se verán como <b className="text-tinta">{(prefijo || prefijoDe(nombre || 'Tienda'))}-0001</b>. No se repite entre tiendas.</span></div></div>
         <div><label className="etiqueta" htmlFor="ciudad">Ciudad</label><input id="ciudad" name="ciudad" className="campo" defaultValue="Santa Cruz" /></div>
         <div><label className="etiqueta" htmlFor="plan">Plan</label>
           <select id="plan" name="plan" className="campo" defaultValue="emprende">

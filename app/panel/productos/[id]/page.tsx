@@ -8,5 +8,5 @@ export default async function EditarProducto({ params }: { params: Promise<{ id:
   if (!tienda || !config) return null
   const { data: producto } = await supabase.from('productos').select('*').eq('id', id).eq('tienda_id', tienda.id).maybeSingle()
   if (!producto) notFound()
-  return <ProductoForm tiendaId={tienda.id} config={config} maxFotos={plan.fotos} siguiente={tienda.siguiente_numero} producto={producto} />
+  return <ProductoForm tiendaId={tienda.id} config={config} maxFotos={plan.fotos} siguiente={tienda.siguiente_numero} prefijo={tienda.prefijo} producto={producto} />
 }

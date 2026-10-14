@@ -3,15 +3,15 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { bs, pid } from '@/lib/utils'
+import { bs, codigoEdai } from '@/lib/utils'
 
-type Prod = { id: string; numero: number; nombre: string; precio: number; precio_oferta: number | null; unidad: string; stock: number | null }
-type Linea = { producto_id: string; numero: number; nombre: string; unidad: string; precio: number; cantidad: number }
+type Prod = { id: string; numero: number; codigo: string | null; nombre: string; precio: number; precio_oferta: number | null; unidad: string; stock: number | null }
+type Linea = { producto_id: string; numero: number; nombre: string; unidad: string; precio: number; cantidad: number; stock: number | null }
 
 const CANALES = ['Tienda física', 'WhatsApp', 'Teléfono', 'Redes sociales']
 const PAGOS = ['Efectivo', 'QR', 'Transferencia', 'Tarjeta']
 
-export default function RegistrarVenta({ tiendaId, productos, usaOferta }: { tiendaId: string; productos: Prod[]; usaOferta: boolean }) {
+export default function RegistrarVenta({ tiendaId, prefijo, productos, usaOferta }: { tiendaId: string; prefijo: string; productos: Prod[]; usaOferta: boolean }) {
   const router = useRouter()
   const [q, setQ] = useState('')
   const [lineas, setLineas] = useState<Linea[]>([])
@@ -23,21 +23,31 @@ export default function RegistrarVenta({ tiendaId, productos, usaOferta }: { tie
   const visibles = useMemo(() => {
     const t = q.trim().toLowerCase()
     return productos.filter((p) => !(p.stock !== null && Number(p.stock) <= 0) &&
-      (!t || p.nombre.toLowerCase().includes(t) || pid(p.numero).toLowerCase().includes(t) || String(p.numero) === t.replace(/\D/g, '').replace(/^0+/, '')))
-  }, [q, productos])
+      (!t || p.nombre.toLowerCase().includes(t) || codigoEdai(prefijo, p.numero).toLowerCase().includes(t) ||
+        (p.codigo ?? '').toLowerCase().includes(t) || String(p.numero) === t.replace(/\D/g, '').replace(/^0+/, '')))
+  }, [q, productos, prefijo])
 
   const subtotal = lineas.reduce((a, l) => a + l.precio * l.cantidad, 0)
   const total = Math.max(0, subtotal - (d.descuento || 0))
 
+  const enCarrito = (id: string) => lineas.find((l) => l.producto_id === id)?.cantidad ?? 0
+  const quedan = (p: { stock: number | null }, usado: number) => (p.stock === null ? null : +(Number(p.stock) - usado).toFixed(2))
+
   function agregar(p: Prod) {
-    setLineas((ls) => {
-      const ex = ls.find((l) => l.producto_id === p.id)
-      if (ex) return ls.map((l) => (l === ex ? { ...l, cantidad: +(l.cantidad + paso(l.unidad)).toFixed(2) } : l))
-      const precio = usaOferta && p.precio_oferta !== null ? Number(p.precio_oferta) : Number(p.precio)
-      return [...ls, { producto_id: p.id, numero: p.numero, nombre: p.nombre, unidad: p.unidad, precio, cantidad: 1 }]
-    })
+    setErr('')
+    const ex = lineas.find((l) => l.producto_id === p.id)
+    const nueva = ex ? +(ex.cantidad + paso(ex.unidad)).toFixed(2) : 1
+    if (p.stock !== null && nueva > Number(p.stock)) return setErr(`Solo hay ${Number(p.stock)} de ${p.nombre}.`)
+    if (ex) return setLineas((ls) => ls.map((l) => (l.producto_id === p.id ? { ...l, cantidad: nueva } : l)))
+    const precio = usaOferta && p.precio_oferta !== null ? Number(p.precio_oferta) : Number(p.precio)
+    setLineas((ls) => [...ls, { producto_id: p.id, numero: p.numero, nombre: p.nombre, unidad: p.unidad, precio, cantidad: 1, stock: p.stock === null ? null : Number(p.stock) }])
   }
-  const cambiar = (i: number, c: number) => setLineas((ls) => (c <= 0 ? ls.filter((_, k) => k !== i) : ls.map((l, k) => (k === i ? { ...l, cantidad: +c.toFixed(2) } : l))))
+  const cambiar = (i: number, c: number) => {
+    setErr('')
+    const l = lineas[i]
+    if (l.stock !== null && c > l.stock) { setErr(`Solo hay ${l.stock} de ${l.nombre}.`); c = l.stock }
+    setLineas((ls) => (c <= 0 ? ls.filter((_, k) => k !== i) : ls.map((x, k) => (k === i ? { ...x, cantidad: +c.toFixed(2) } : x))))
+  }
 
   async function guardar() {
     setErr('')
@@ -79,9 +89,12 @@ export default function RegistrarVenta({ tiendaId, productos, usaOferta }: { tie
           <div className="mt-3 grid max-h-80 grid-cols-2 gap-2 overflow-y-auto">
             {visibles.map((p) => (
               <button type="button" key={p.id} onClick={() => agregar(p)} className="rounded-lg border border-linea bg-sup2 p-2.5 text-left hover:border-acento">
-                <small className="text-suave">{pid(p.numero)}</small>
+                <small className="text-suave">{codigoEdai(prefijo, p.numero)}{p.codigo ? ` · ${p.codigo}` : ''}</small>
                 <b className="block text-sm leading-snug">{p.nombre}</b>
                 <small className="text-suave">{bs(usaOferta && p.precio_oferta !== null ? p.precio_oferta : p.precio)} / {p.unidad}</small>
+                {p.stock !== null && (() => { const r = quedan(p, enCarrito(p.id))!; return (
+                  <small className={`block font-semibold ${r <= 0 ? 'text-malo' : r <= 3 ? 'text-aviso' : 'text-chiptinta'}`}>
+                    {r <= 0 ? 'Ya agregaste todo el stock' : `${r} disponible${r === 1 ? '' : 's'}`}</small>) })()}
               </button>
             ))}
             {visibles.length === 0 && <p className="col-span-2 py-6 text-center text-sm text-suave">No hay productos disponibles con ese nombre</p>}
@@ -92,7 +105,7 @@ export default function RegistrarVenta({ tiendaId, productos, usaOferta }: { tie
           {lineas.length === 0 && <p className="py-6 text-center text-sm text-suave">Toca un producto para agregarlo</p>}
           {lineas.map((l, i) => (
             <div key={l.producto_id} className="flex items-center gap-2 border-t border-linea py-2.5 first:border-t-0">
-              <div className="min-w-0 flex-1"><b className="block text-sm">{l.nombre}</b><small className="text-suave">{bs(l.precio)} / {l.unidad}</small></div>
+              <div className="min-w-0 flex-1"><b className="block text-sm">{l.nombre}</b><small className="text-suave">{bs(l.precio)} / {l.unidad}{l.stock !== null ? ` · hay ${l.stock}` : ''}</small></div>
               <div className="flex items-center overflow-hidden rounded-lg border border-linea">
                 <button type="button" aria-label="Menos" className="h-8 w-8 bg-sup2" onClick={() => cambiar(i, l.cantidad - paso(l.unidad))}>−</button>
                 <input type="number" min="0" step="any" aria-label={`Cantidad de ${l.nombre}`} className="w-14 bg-transparent text-center" value={l.cantidad} onChange={(e) => cambiar(i, Number(e.target.value) || 0)} />

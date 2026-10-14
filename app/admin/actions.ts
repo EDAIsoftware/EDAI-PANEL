@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { configDeRubro, CAMPOS_EXTRA, RUBROS, type CampoExtra } from '@/lib/rubros'
 import { esPlan, PLANES } from '@/lib/planes'
-import { PANEL_URL, slugify, soloDigitos } from '@/lib/utils'
+import { PANEL_URL, prefijoDe, prefijoValido, slugify, soloDigitos } from '@/lib/utils'
 
 export type Acceso = {
   ok: true
@@ -52,11 +52,27 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
   if (!esPlan(plan)) return { ok: false, error: 'Plan no válido.' }
   if (!RUBROS[rubro]) return { ok: false, error: 'Rubro no válido.' }
 
+  // Prefijo de los códigos de producto (único entre todas las tiendas)
+  const pedido = String(form.get('prefijo') || '').trim().toUpperCase()
+  if (pedido && !prefijoValido(pedido)) return { ok: false, error: 'El prefijo debe tener de 2 a 6 letras o números, sin espacios.' }
+  let prefijo = pedido || prefijoDe(nombre)
+  const { data: usados } = await supabase.from('tiendas').select('prefijo').like('prefijo', `${prefijo.slice(0, 4)}%`)
+  const ocupados = new Set((usados ?? []).map((x: { prefijo: string }) => x.prefijo))
+  if (ocupados.has(prefijo)) {
+    if (pedido) return { ok: false, error: `El prefijo ${prefijo} ya lo usa otra tienda.` }
+    let n = 2
+    while (ocupados.has(prefijo.slice(0, 4) + n)) n++
+    prefijo = prefijo.slice(0, 4) + n
+  }
+
   const { data: tienda, error } = await supabase.from('tiendas').insert({
-    nombre, slug, dueno_nombre: dueno, whatsapp, ciudad, plan, rubro, config: configDeRubro(rubro),
+    nombre, slug, prefijo, dueno_nombre: dueno, whatsapp, ciudad, plan, rubro, config: configDeRubro(rubro),
   }).select('id').single()
   if (error || !tienda) {
-    return { ok: false, error: error?.code === '23505' ? `La dirección ${slug} ya está en uso.` : 'No se pudo crear la tienda.' }
+    const msg = error?.message || ''
+    return { ok: false, error: error?.code === '23505'
+      ? (msg.includes('prefijo') ? `El prefijo ${prefijo} ya está en uso.` : `La dirección ${slug} ya está en uso.`)
+      : 'No se pudo crear la tienda.' }
   }
 
   try {
@@ -155,6 +171,11 @@ export async function actualizarDatos(tiendaId: string, form: FormData) {
     ciudad: String(form.get('ciudad') || '').trim(),
     dominio: dominio || null,
   }).eq('id', tiendaId)
+  const prefijo = String(form.get('prefijo') || '').trim().toUpperCase()
+  if (prefijoValido(prefijo)) {
+    // Si otra tienda ya lo usa, la base de datos lo rechaza y se queda el anterior
+    await supabase.from('tiendas').update({ prefijo }).eq('id', tiendaId)
+  }
   revalidatePath(`/admin/tiendas/${tiendaId}`)
 }
 

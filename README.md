@@ -31,6 +31,8 @@ Hecho con Next.js 15 + Supabase, desplegado en Vercel.
 
 > La **service_role key** da acceso total a la base de datos. Nunca la pegues en el código, en GitHub ni la compartas.
 
+> **Si ya tenías la base creada antes** y actualizas el proyecto, ejecuta también los archivos `supabase/migracion-XXX.sql` que no hayas corrido, en orden.
+
 ## 2. Probarlo en tu computadora
 
 Necesitas Node.js 20 o más nuevo.
