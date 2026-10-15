@@ -251,7 +251,8 @@ grant execute on function public.confirmar_asistencia(text, text, text, int, tex
 -- ---------------------------------------------------------------------
 -- RESUMEN PARA EL PANEL MAESTRO
 -- ---------------------------------------------------------------------
-create or replace view public.admin_eventos with (security_invoker = true) as
+drop view if exists public.admin_eventos;
+create view public.admin_eventos with (security_invoker = true) as
 select
   e.*,
   pl.nombre as plan_nombre, pl.precio as plan_precio, pl.max_invitados, pl.pases as plan_pases,

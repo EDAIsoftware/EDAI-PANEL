@@ -348,7 +348,8 @@ grant execute on function public.registrar_visita(text) to anon, authenticated;
 -- =====================================================================
 --  RESUMEN PARA EL PANEL MAESTRO (respeta RLS: solo el admin ve todas)
 -- =====================================================================
-create or replace view public.admin_resumen with (security_invoker = true) as
+drop view if exists public.admin_resumen;
+create view public.admin_resumen with (security_invoker = true) as
 select
   t.*,
   pl.nombre        as plan_nombre,
