@@ -14,8 +14,8 @@ export default async function PaginaFicha({ params, searchParams }: {
   const [{ data: v }, { data: a }, { data: t }, { data: e }] = await Promise.all([
     supabase.from('crm_ventas_resumen').select('*').eq('cliente_id', id).order('fecha', { ascending: false }),
     supabase.from('crm_actividades').select('*').eq('cliente_id', id).order('fecha', { ascending: false }),
-    supabase.from('tiendas').select('id, nombre, slug').order('nombre'),
-    supabase.from('eventos').select('id, nombre, slug').order('nombre'),
+    supabase.from('tiendas').select('id, nombre, slug, plan, vence_el, suspendida').order('nombre'),
+    supabase.from('eventos').select('id, nombre, slug, fecha, plan, pagado').order('nombre'),
   ])
   const ventas = (v ?? []) as Venta[]
   const { data: p } = ventas.length

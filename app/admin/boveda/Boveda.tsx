@@ -88,7 +88,11 @@ function leerCsv(texto: string): string[][] {
 // (nunca se guarda en el disco; al recargar la página o tras 5 minutos sin uso se pierde).
 let sesion: { llave: CryptoKey; config: Config } | null = null
 
-export default function Boveda({ sugeridas, seccion }: { sugeridas: string[]; seccion: Tipo }) {
+type ClienteCrm = { id: string; nombre: string; empresa: string | null }
+
+export default function Boveda({ sugeridas, seccion, carpetaInicial, crm = [] }: {
+  sugeridas: string[]; seccion: Tipo; carpetaInicial?: string; crm?: ClienteCrm[]
+}) {
   const supabase = useMemo(() => createClient(), [])
   const [estado, setEstado] = useState<'cargando' | 'crear' | 'bloqueada' | 'abierta'>('cargando')
   const [config, setConfig] = useState<Config | null>(null)
@@ -99,7 +103,7 @@ export default function Boveda({ sugeridas, seccion }: { sugeridas: string[]; se
   const [err, setErr] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const [q, setQ] = useState('')
-  const [carpeta, setCarpeta] = useState('Todas')
+  const [carpeta, setCarpeta] = useState(carpetaInicial || 'Todas')
   const [form, setForm] = useState<(Item & { id?: string }) | null>(null)
   const [visible, setVisible] = useState<string | null>(null)
   const [aviso, setAviso] = useState('')
@@ -195,7 +199,7 @@ export default function Boveda({ sugeridas, seccion }: { sugeridas: string[]; se
       if (error || !data) return avisar('No se pudo guardar.')
       setFilas((f) => [...f, { id: data.id, item: limpio }])
     }
-    setForm(null); avisar('Guardado y cifrado.')
+    setForm(null); setCarpeta(limpio.carpeta); setQ(''); avisar('Guardado y cifrado.')
   }
 
   async function eliminar(f: Fila) {
@@ -309,50 +313,109 @@ export default function Boveda({ sugeridas, seccion }: { sugeridas: string[]; se
   }
 
   // ---------- Bóveda abierta ----------
+  const enCarpeta = carpeta !== 'Todas'
+  const buscando = q.trim() !== ''
+  const deCarpeta = (c: string) => deSeccion.filter((f) => f.item.carpeta === c)
+  const fichaCrm = (c: string) => crm.find((x) => [x.nombre, x.empresa].some((n) => n && n.trim().toLowerCase() === c.trim().toLowerCase()))
+
+  async function renombrarCarpeta() {
+    if (!llave) return
+    const nuevo = prompt(`Nuevo nombre para "${carpeta}"`, carpeta)?.trim()
+    if (!nuevo || nuevo === carpeta) return
+    const items = deCarpeta(carpeta)
+    for (const f of items) {
+      const c = await cifrar(llave, JSON.stringify({ ...f.item, carpeta: nuevo }))
+      await supabase.from('boveda').update({ ...c, actualizado_en: new Date().toISOString() }).eq('id', f.id)
+    }
+    setFilas((l) => l.map((f) => (f.item.tipo === seccion && f.item.carpeta === carpeta ? { ...f, item: { ...f.item, carpeta: nuevo } } : f)))
+    setCarpeta(nuevo); avisar('Carpeta renombrada.')
+  }
+
+  const Fila = ({ f }: { f: Fila }) => (
+    <div className="flex flex-wrap items-center gap-3 border-t border-linea px-4 py-3 first:border-t-0">
+      <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-chip text-sm font-bold text-chiptinta">{f.item.titulo.slice(0, 2).toUpperCase()}</div>
+      <div className="min-w-0 flex-1">
+        <b className="block">{f.item.titulo}{!enCarpeta && <small className="font-normal text-suave"> · {f.item.carpeta}</small>}</b>
+        <small className="block truncate text-suave">{f.item.usuario || 'sin usuario'}{f.item.url ? ` · ${f.item.url}` : ''}</small>
+        {visible === f.id && <code className="mt-1 block break-all rounded bg-sup2 px-2 py-1 text-sm">{f.item.clave || '(sin contraseña)'}</code>}
+        {visible === f.id && f.item.notas && <p className="mt-1 whitespace-pre-line text-sm text-suave">{f.item.notas}</p>}
+      </div>
+      {f.item.usuario && <button className="btn-borde btn-sm" onClick={() => copiar(f.item.usuario, 'Usuario')}>Usuario</button>}
+      {f.item.clave && <button className="btn-borde btn-sm" onClick={() => copiar(f.item.clave, 'Contraseña')}>Clave</button>}
+      <button className="btn-borde btn-sm" onClick={() => { setVisible(visible === f.id ? null : f.id); if (visible !== f.id) setTimeout(() => setVisible((v) => (v === f.id ? null : v)), 15000) }}>{visible === f.id ? 'Ocultar' : 'Ver'}</button>
+      {f.item.url && <a className="btn-borde btn-sm" href={/^https?:\/\//.test(f.item.url) ? f.item.url : `https://${f.item.url}`} target="_blank" rel="noopener noreferrer">Abrir</a>}
+      <button className="btn-borde btn-sm" onClick={() => setForm({ ...f.item, id: f.id })}>Editar</button>
+      <button className="btn-borde btn-sm text-malo" onClick={() => eliminar(f)}>Eliminar</button>
+    </div>
+  )
+
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><h1 className="titulo">{seccion === 'cliente' ? 'Claves de clientes' : 'Cuentas de EDAI'}</h1>
-          <p className="subtitulo">{seccion === 'cliente'
-            ? `${nClientes} ${nClientes === 1 ? 'cliente' : 'clientes'} · ${nCuentasClientes} ${nCuentasClientes === 1 ? 'cuenta' : 'cuentas'}`
-            : `${nEdai} ${nEdai === 1 ? 'cuenta' : 'cuentas'} de la empresa`} · cifradas · se bloquea tras 5 minutos sin uso</p></div>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-primario" onClick={() => setForm({ ...vacio, tipo: seccion, carpeta: carpeta !== 'Todas' ? carpeta : seccion === 'edai' ? GRUPOS_EDAI[0] : '' })}>Nueva clave</button>
-          <button className="btn-borde" onClick={bloquear}>Bloquear</button>
-        </div>
-      </div>
-
-      <div className="mb-3 flex flex-wrap gap-2">
-        <input className="campo min-w-[220px] flex-1" placeholder={seccion === 'cliente' ? 'Buscar por cliente, título, usuario, web o notas' : 'Buscar por título, usuario, web o notas'} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar" />
-      </div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {['Todas', ...carpetas].map((c) => (
-          <button key={c} onClick={() => setCarpeta(c)} className={`rounded-full border px-3 py-1 text-sm ${carpeta === c ? 'border-primario bg-primario text-sobreprimario' : 'border-linea bg-sup2'}`}>
-            {c === 'Todas' ? (seccion === 'cliente' ? 'Todos los clientes' : 'Todas') : c} {c !== 'Todas' && <span className="opacity-70">({deSeccion.filter((f) => f.item.carpeta === c).length})</span>}
-          </button>
-        ))}
-      </div>
-
-      <div className="caja">
-        {visibles.length === 0 && <p className="p-5 text-suave">{q ? 'Nada coincide con la búsqueda.' : seccion === 'cliente' ? 'Todavía no tienes claves de clientes.' : 'Todavía no tienes cuentas de EDAI guardadas.'}</p>}
-        {visibles.map((f) => (
-          <div key={f.id} className="flex flex-wrap items-center gap-3 border-t border-linea px-4 py-3 first:border-t-0">
-            <div className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-chip text-sm font-bold text-chiptinta">{f.item.titulo.slice(0, 2).toUpperCase()}</div>
-            <div className="min-w-0 flex-1">
-              <b className="block">{f.item.titulo} <small className="font-normal text-suave">· {f.item.carpeta}</small></b>
-              <small className="block truncate text-suave">{f.item.usuario || 'sin usuario'}{f.item.url ? ` · ${f.item.url}` : ''}</small>
-              {visible === f.id && <code className="mt-1 block break-all rounded bg-sup2 px-2 py-1 text-sm">{f.item.clave || '(sin contraseña)'}</code>}
-              {visible === f.id && f.item.notas && <p className="mt-1 whitespace-pre-line text-sm text-suave">{f.item.notas}</p>}
+      {enCarpeta ? (
+        <>
+          <button className="text-sm text-suave underline" onClick={() => { setCarpeta('Todas'); setQ('') }}>← {seccion === 'cliente' ? 'Todos los clientes' : 'Todos los grupos'}</button>
+          <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="grid h-12 w-12 place-items-center rounded-xl bg-chip text-lg font-extrabold text-chiptinta">📁</div>
+              <div><h1 className="titulo">{carpeta}</h1>
+                <p className="text-suave">{deCarpeta(carpeta).length} {deCarpeta(carpeta).length === 1 ? 'cuenta' : 'cuentas'}
+                  {(() => { const c = fichaCrm(carpeta); return c ? <> · <a className="underline" href={`/admin/crm/clientes/${c.id}`}>ver ficha en el CRM</a></> : null })()}</p></div>
             </div>
-            {f.item.usuario && <button className="btn-borde btn-sm" onClick={() => copiar(f.item.usuario, 'Usuario')}>Usuario</button>}
-            {f.item.clave && <button className="btn-borde btn-sm" onClick={() => copiar(f.item.clave, 'Contraseña')}>Clave</button>}
-            <button className="btn-borde btn-sm" onClick={() => { setVisible(visible === f.id ? null : f.id); if (visible !== f.id) setTimeout(() => setVisible((v) => (v === f.id ? null : v)), 15000) }}>{visible === f.id ? 'Ocultar' : 'Ver'}</button>
-            {f.item.url && <a className="btn-borde btn-sm" href={/^https?:\/\//.test(f.item.url) ? f.item.url : `https://${f.item.url}`} target="_blank" rel="noopener noreferrer">Abrir</a>}
-            <button className="btn-borde btn-sm" onClick={() => setForm({ ...f.item, id: f.id })}>Editar</button>
-            <button className="btn-borde btn-sm text-malo" onClick={() => eliminar(f)}>Eliminar</button>
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-primario" onClick={() => setForm({ ...vacio, tipo: seccion, carpeta })}>Agregar cuenta</button>
+              <button className="btn-borde" onClick={renombrarCarpeta}>Renombrar</button>
+              <button className="btn-borde" onClick={bloquear}>Bloquear</button>
+            </div>
           </div>
-        ))}
+        </>
+      ) : (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><h1 className="titulo">{seccion === 'cliente' ? 'Claves de clientes' : 'Cuentas de EDAI'}</h1>
+            <p className="subtitulo">{seccion === 'cliente'
+              ? `${nClientes} ${nClientes === 1 ? 'cliente' : 'clientes'} · ${nCuentasClientes} ${nCuentasClientes === 1 ? 'cuenta' : 'cuentas'}`
+              : `${carpetas.length} ${carpetas.length === 1 ? 'grupo' : 'grupos'} · ${nEdai} ${nEdai === 1 ? 'cuenta' : 'cuentas'}`} · cifradas · se bloquea tras 5 minutos sin uso</p></div>
+          <div className="flex flex-wrap gap-2">
+            <button className="btn-primario" onClick={() => setForm({ ...vacio, tipo: seccion, carpeta: seccion === 'edai' ? GRUPOS_EDAI[0] : '' })}>{seccion === 'cliente' ? 'Nuevo cliente' : 'Nueva cuenta'}</button>
+            <button className="btn-borde" onClick={bloquear}>Bloquear</button>
+          </div>
+        </div>
+      )}
+
+      <div className="my-4 flex flex-wrap gap-2">
+        <input className="campo min-w-[220px] flex-1" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar"
+          placeholder={enCarpeta ? `Buscar en ${carpeta}` : seccion === 'cliente' ? 'Buscar en todos los clientes: título, usuario, web o notas' : 'Buscar en todas las cuentas de EDAI'} />
       </div>
+
+      {!enCarpeta && !buscando ? (
+        carpetas.length === 0 ? (
+          <div className="caja p-6 text-suave">{seccion === 'cliente' ? 'Todavía no tienes claves de clientes. Toca "Nuevo cliente" para crear su carpeta.' : 'Todavía no tienes cuentas de EDAI guardadas.'}</div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {carpetas.map((c) => {
+              const items = deCarpeta(c)
+              return (
+                <button key={c} onClick={() => { setCarpeta(c); setQ('') }} className="caja p-4 text-left transition hover:border-acento">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-chip text-lg">📁</div>
+                    <div className="min-w-0 flex-1"><b className="block truncate">{c}</b>
+                      <small className="text-suave">{items.length} {items.length === 1 ? 'cuenta' : 'cuentas'}{fichaCrm(c) ? ' · en el CRM' : ''}</small></div>
+                    <span className="text-suave" aria-hidden>›</span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {items.slice(0, 4).map((f) => <span key={f.id} className="rounded-md border border-linea bg-sup2 px-2 py-0.5 text-xs">{f.item.titulo}</span>)}
+                    {items.length > 4 && <span className="px-1 text-xs text-suave">+{items.length - 4}</span>}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )
+      ) : (
+        <div className="caja">
+          {visibles.length === 0 && <p className="p-5 text-suave">{buscando ? 'Nada coincide con la búsqueda.' : `Esta carpeta está vacía. Toca "Agregar cuenta".`}</p>}
+          {visibles.map((f) => <Fila key={f.id} f={f} />)}
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap gap-2 border-t border-linea pt-5">
         <label className="btn-borde btn-sm cursor-pointer">Importar CSV
@@ -366,11 +429,11 @@ export default function Boveda({ sugeridas, seccion }: { sugeridas: string[]; se
           <form className="caja w-full max-w-lg p-6" onSubmit={(e) => { e.preventDefault(); guardar() }}>
             <h2 className="mb-4 text-xl font-bold">{form.id ? 'Editar' : 'Nueva'} {seccion === 'cliente' ? 'clave de cliente' : 'cuenta de EDAI'}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div><label className="etiqueta" htmlFor="bc">{form.tipo === 'edai' ? 'Grupo' : 'Cliente'}</label>
+              <div><label className="etiqueta" htmlFor="bc">{form.tipo === 'edai' ? 'Grupo (carpeta)' : 'Cliente (carpeta)'}</label>
                 <input id="bc" list="carpetas" className="campo" value={form.carpeta} onChange={(e) => setForm({ ...form, carpeta: e.target.value })} placeholder={form.tipo === 'edai' ? 'Ej: Dominio y hosting' : 'Ej: Medalu'} />
                 <datalist id="carpetas">{(form.tipo === 'edai'
                   ? Array.from(new Set([...GRUPOS_EDAI, ...filas.filter((f) => f.item.tipo === 'edai').map((f) => f.item.carpeta)]))
-                  : Array.from(new Set([...filas.filter((f) => f.item.tipo === 'cliente').map((f) => f.item.carpeta), ...sugeridas.filter((x) => x !== 'EDAI')]))
+                  : Array.from(new Set([...filas.filter((f) => f.item.tipo === 'cliente').map((f) => f.item.carpeta), ...sugeridas.filter((x) => x !== 'EDAI')])).sort()
                 ).map((c) => <option key={c} value={c} />)}</datalist></div>
               <div><label className="etiqueta" htmlFor="bt">Título</label>
                 <input id="bt" className="campo" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} placeholder="Ej: Namecheap" /></div>

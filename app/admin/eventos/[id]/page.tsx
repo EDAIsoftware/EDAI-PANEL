@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PLANES_EVENTO, PLAN_EVENTO_IDS, aLocalBolivia, tipoDe } from '@/lib/eventos'
 import { PANEL_URL, bs, fechaCorta, fechaHora, urlInvitacion, waLink } from '@/lib/utils'
-import { actualizarEventoAdmin, cambiarPlanEvento, eliminarEvento, enlaceAccesoEvento, marcarPagado, suspenderEvento } from '../actions'
+import { actualizarEventoAdmin, cambiarPlanEvento, eliminarEvento, enlaceAccesoEvento, eventoAlCrm, marcarPagado, suspenderEvento } from '../actions'
 import BotonEnlace from '@/components/BotonEnlace'
 import EliminarTienda from '@/components/EliminarTienda'
 
@@ -14,6 +14,7 @@ export default async function FichaEvento({ params }: { params: Promise<{ id: st
   const { data: ev } = await supabase.from('admin_eventos').select('*').eq('id', id).maybeSingle()
   if (!ev) notFound()
   const { data: perfiles } = await supabase.from('perfiles').select('*').eq('evento_id', id)
+  const { data: crm } = await supabase.from('crm_clientes').select('id, nombre').eq('evento_id', id).maybeSingle()
   const admin = createAdminClient()
   const usuarios = await Promise.all((perfiles ?? []).map(async (p) => {
     const { data } = await admin.auth.admin.getUserById(p.user_id)
@@ -33,6 +34,11 @@ export default async function FichaEvento({ params }: { params: Promise<{ id: st
           <p className="text-suave">{t.n} · {fechaHora(ev.fecha)} · activa hasta {fechaCorta(ev.activa_hasta)}</p>
         </div>
         {ev.pagado ? <span className="chip">Pagado</span> : <span className="chip-aviso">Pendiente de pago</span>}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-linea bg-sup px-4 py-2.5 text-sm">
+        {crm ? <>Cliente en el CRM: <b>{crm.nombre}</b><Link className="underline" href={`/admin/crm/clientes/${crm.id}`}>ver ficha</Link></>
+          : <><span className="text-suave">Esta invitación todavía no está en tu CRM.</span><form action={eventoAlCrm.bind(null, id)}><button className="btn-borde btn-sm">Agregar al CRM</button></form></>}
       </div>
 
       <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

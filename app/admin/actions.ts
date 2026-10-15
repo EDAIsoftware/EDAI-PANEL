@@ -8,6 +8,7 @@ import { configDeRubro, CAMPOS_EXTRA, RUBROS, type CampoExtra } from '@/lib/rubr
 import { esPlan, PLANES } from '@/lib/planes'
 import { prefijoDe, prefijoValido, slugify, soloDigitos } from '@/lib/utils'
 import { generarEnlace } from '@/lib/accesos'
+import { vincularCrm } from '@/lib/crmVinculo'
 
 export type Acceso = {
   ok: true
@@ -72,7 +73,9 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
     const admin = createAdminClient()
     const { error: e2 } = await admin.from('perfiles').insert({ user_id: userId, rol: 'dueno', tienda_id: tienda.id, nombre: dueno, correo })
     if (e2) throw new Error(e2.message)
-    revalidatePath('/admin')
+    await vincularCrm(supabase, { tipo: 'tienda', id: tienda.id, crmId: String(form.get('crm_cliente_id') || '') || null,
+      nombre: dueno || nombre, empresa: nombre, telefono: whatsapp, email: correo })
+    revalidatePath('/admin', 'layout')
     return { ok: true, tiendaId: tienda.id, tienda: nombre, slug, nombre: dueno, correo, whatsapp, enlace, tipo: 'invitacion' }
   } catch (e) {
     await supabase.from('tiendas').delete().eq('id', tienda.id)
@@ -213,4 +216,14 @@ export async function eliminarTienda(tiendaId: string, confirmacion: string) {
   await admin.from('tiendas').delete().eq('id', tiendaId)
   revalidatePath('/admin'); revalidatePath('/admin/tiendas')
   redirect('/admin/tiendas')
+}
+
+// Agrega al CRM una tienda que todavía no tiene cliente vinculado
+export async function tiendaAlCrm(tiendaId: string) {
+  const { supabase } = await requireAdmin()
+  const { data: t } = await supabase.from('tiendas').select('nombre, dueno_nombre, whatsapp').eq('id', tiendaId).single()
+  if (!t) return
+  const { data: p } = await supabase.from('perfiles').select('correo').eq('tienda_id', tiendaId).eq('rol', 'dueno').maybeSingle()
+  await vincularCrm(supabase, { tipo: 'tienda', id: tiendaId, nombre: t.dueno_nombre || t.nombre, empresa: t.nombre, telefono: t.whatsapp, email: p?.correo })
+  revalidatePath(`/admin/tiendas/${tiendaId}`)
 }

@@ -6,7 +6,7 @@ import { CAMPOS_BASE, CAMPOS_EXTRA, RUBROS, leerConfig, type CampoExtra } from '
 import { PLANES, PLAN_IDS, esPlan } from '@/lib/planes'
 import { PANEL_URL, bs, diasHasta, fechaCorta, urlTienda, waLink } from '@/lib/utils'
 import {
-  actualizarDatos, cambiarActivo, cambiarPlan, cambiarRubro, guardarConfig, registrarPago, suspender,
+  tiendaAlCrm, actualizarDatos, cambiarActivo, cambiarPlan, cambiarRubro, guardarConfig, registrarPago, suspender,
 } from '../../actions'
 import BotonEnlace from '@/components/BotonEnlace'
 import InvitarUsuario from '@/components/InvitarUsuario'
@@ -18,6 +18,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
   const { data: t } = await supabase.from('admin_resumen').select('*').eq('id', id).maybeSingle()
   if (!t) notFound()
   const { data: perfiles } = await supabase.from('perfiles').select('*').eq('tienda_id', id).order('creado_en')
+  const { data: crm } = await supabase.from('crm_clientes').select('id, nombre, numero').eq('tienda_id', id).maybeSingle()
 
   // Último ingreso de cada usuario (solo lo puede leer el servidor)
   const admin = createAdminClient()
@@ -46,6 +47,11 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
         </div>
         {t.suspendida ? <span className="chip-malo">Suspendida</span>
           : <span className={d < 0 ? 'chip-malo' : d <= 7 ? 'chip-aviso' : 'chip'}>{d < 0 ? `Vencida hace ${-d} d` : `Hasta ${fechaCorta(t.vence_el)}`}</span>}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-linea bg-sup px-4 py-2.5 text-sm">
+        {crm ? <>Cliente en el CRM: <b>{crm.nombre}</b><Link className="underline" href={`/admin/crm/clientes/${crm.id}`}>ver ficha, ventas e historial</Link></>
+          : <><span className="text-suave">Esta tienda todavía no está en tu CRM.</span><form action={tiendaAlCrm.bind(null, id)}><button className="btn-borde btn-sm">Agregar al CRM</button></form></>}
       </div>
 
       {/* MÉTRICAS */}

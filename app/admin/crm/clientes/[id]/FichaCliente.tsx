@@ -15,7 +15,9 @@ const chipEstado = (e: string) => (e === 'Entregado' ? 'chip' : e === 'Cancelado
 
 export default function FichaCliente({ cliente: c, ventas, pagos, actividades, tc, divisiones, servicios, clientes, tiendas, eventos, nuevaVenta }: {
   cliente: Cliente; ventas: Venta[]; pagos: Pago[]; actividades: Actividad[]; tc: number; divisiones: Division[]; servicios: Servicio[]
-  clientes: Pick<Cliente, 'id' | 'nombre' | 'empresa'>[]; tiendas: { id: string; nombre: string; slug: string }[]; eventos: { id: string; nombre: string; slug: string }[]
+  clientes: Pick<Cliente, 'id' | 'nombre' | 'empresa'>[]
+  tiendas: { id: string; nombre: string; slug: string; plan: string; vence_el: string; suspendida: boolean }[]
+  eventos: { id: string; nombre: string; slug: string; fecha: string; plan: string; pagado: boolean }[]
   nuevaVenta: { servicio?: string; valor?: number; moneda?: Moneda } | null
 }) {
   const router = useRouter()
@@ -124,14 +126,44 @@ export default function FichaCliente({ cliente: c, ventas, pagos, actividades, t
         </div>
 
         <div>
+          <h2 className="mb-3 text-lg font-bold">Productos EDAI</h2>
+          <div className="caja mb-6 divide-y divide-linea">
+            {tienda ? (
+              <div className="p-4">
+                <small className="text-suave">Tienda online</small>
+                <b className="block">{tienda.nombre}</b>
+                <small className="text-suave">Plan {tienda.plan} · {tienda.suspendida ? 'suspendida' : `vence el ${tienda.vence_el}`}</small>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link className="btn-borde btn-sm" href={`/admin/tiendas/${tienda.id}`}>Ficha de la tienda</Link>
+                  <a className="btn-borde btn-sm" href={urlTienda(tienda.slug)} target="_blank" rel="noopener noreferrer">Ver tienda</a>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 p-4"><span className="flex-1 text-sm text-suave">No tiene tienda online.</span>
+                <Link className="btn-primario btn-sm" href={`/admin/nueva?cliente=${c.id}`}>Crear su tienda</Link></div>
+            )}
+            {evento ? (
+              <div className="p-4">
+                <small className="text-suave">Invitación digital</small>
+                <b className="block">{evento.nombre}</b>
+                <small className="text-suave">Plan {evento.plan} · evento el {evento.fecha.slice(0, 10)} · {evento.pagado ? 'pagada' : 'sin pagar'}</small>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link className="btn-borde btn-sm" href={`/admin/eventos/${evento.id}`}>Ficha de la invitación</Link>
+                  <a className="btn-borde btn-sm" href={urlInvitacion(evento.slug)} target="_blank" rel="noopener noreferrer">Ver invitación</a>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 p-4"><span className="flex-1 text-sm text-suave">No tiene invitación digital.</span>
+                <Link className="btn-borde btn-sm" href={`/admin/eventos/nuevo?cliente=${c.id}`}>Crear invitación</Link></div>
+            )}
+          </div>
+
           <h2 className="mb-3 text-lg font-bold">Datos</h2>
           <div className="caja space-y-2 p-4 text-sm">
             <p><span className="text-suave">Teléfono:</span> {c.telefono || '—'}</p>
             <p><span className="text-suave">Correo:</span> {c.email || '—'}</p>
-            {tienda && <p><span className="text-suave">Tienda EDAI:</span> <a className="underline" href={urlTienda(tienda.slug)} target="_blank" rel="noopener noreferrer">{tienda.nombre}</a> · <Link className="underline" href={`/admin/tiendas/${tienda.id}`}>ficha</Link></p>}
-            {evento && <p><span className="text-suave">Invitación EDAI:</span> <a className="underline" href={urlInvitacion(evento.slug)} target="_blank" rel="noopener noreferrer">{evento.nombre}</a> · <Link className="underline" href={`/admin/eventos/${evento.id}`}>ficha</Link></p>}
             {c.notas && <p className="whitespace-pre-line rounded-lg bg-sup2 p-3">{c.notas}</p>}
-            <p className="pt-1"><Link className="text-suave underline" href="/admin/boveda/clientes">Ver sus claves en la bóveda</Link></p>
+            <p className="pt-1"><Link className="text-suave underline" href={`/admin/boveda/clientes?carpeta=${encodeURIComponent(c.empresa || c.nombre)}`}>Abrir su carpeta de claves en la bóveda</Link></p>
           </div>
 
           <h2 className="mb-3 mt-6 text-lg font-bold">Historial</h2>

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generarEnlace } from '@/lib/accesos'
+import { vincularCrm } from '@/lib/crmVinculo'
 import { TIPOS_EVENTO, aIsoBolivia, esPlanEvento, esTipo, ESTILOS } from '@/lib/eventos'
 import { slugify, soloDigitos, urlInvitacion } from '@/lib/utils'
 import type { Resultado } from '../actions'
@@ -44,7 +45,9 @@ export async function crearEvento(_prev: Resultado, form: FormData): Promise<Res
     const { userId, enlace } = await generarEnlace(correo, 'invite')
     const { error: e2 } = await createAdminClient().from('perfiles').insert({ user_id: userId, rol: 'evento', evento_id: ev.id, nombre: cliente, correo })
     if (e2) throw new Error(e2.message)
-    revalidatePath('/admin/eventos')
+    await vincularCrm(supabase, { tipo: 'evento', id: ev.id, crmId: String(form.get('crm_cliente_id') || '') || null,
+      nombre: cliente || nombre, telefono: whatsapp, email: correo })
+    revalidatePath('/admin', 'layout')
     return { ok: true, tiendaId: ev.id, tienda: nombre, slug, nombre: cliente, correo, whatsapp, enlace, tipo: 'invitacion',
       urlPublica: urlInvitacion(slug), etiquetaPublica: 'Su invitación', esEvento: true }
   } catch (e) {
@@ -115,4 +118,14 @@ export async function eliminarEvento(eventoId: string, confirmacion: string) {
   await admin.from('eventos').delete().eq('id', eventoId)
   revalidatePath('/admin/eventos')
   redirect('/admin/eventos')
+}
+
+// Agrega al CRM una invitación que todavía no tiene cliente vinculado
+export async function eventoAlCrm(eventoId: string) {
+  const { supabase } = await requireAdmin()
+  const { data: e } = await supabase.from('eventos').select('nombre, cliente_nombre, whatsapp').eq('id', eventoId).single()
+  if (!e) return
+  const { data: p } = await supabase.from('perfiles').select('correo').eq('evento_id', eventoId).maybeSingle()
+  await vincularCrm(supabase, { tipo: 'evento', id: eventoId, nombre: e.cliente_nombre || e.nombre, telefono: e.whatsapp, email: p?.correo })
+  revalidatePath(`/admin/eventos/${eventoId}`)
 }
