@@ -126,7 +126,15 @@ lib/planes.ts            planes y límites (los límites reales los hace cumplir
 
 ## Orden de las migraciones
 
-`schema.sql` → `migracion-002-codigos.sql` → `migracion-003-invitaciones.sql` → `migracion-004-apariencia-y-planes.sql`. Todas se pueden volver a ejecutar sin romper nada.
+`schema.sql` → `migracion-002-codigos.sql` → `migracion-003-invitaciones.sql` → `migracion-004-apariencia-y-planes.sql` → `migracion-005-boveda.sql` → `migracion-006-crm.sql` (y una sola vez `datos-iniciales-crm.sql`). Todas se pueden volver a ejecutar sin romper nada.
+
+## Bóveda de contraseñas
+
+Sección **Bóveda** del panel maestro, solo para el administrador. Todo se cifra en el navegador con la contraseña maestra (PBKDF2 + AES-256-GCM); la base de datos guarda solo texto cifrado. Si se olvida la contraseña maestra, los datos no se pueden recuperar.
+
+## CRM de EDAI
+
+Dentro del panel maestro, sección **CRM**: inicio con utilidad del mes, cobrado, por cobrar, gastos, ingreso recurrente, próximas acciones, embudo y ventas por mes; **Prospectos** en tablero por etapas; **Clientes** con ficha, ventas, pagos e historial; **Ventas** con margen y saldos; **Servicios** (catálogo de paquetes) y **Gastos**. En **Ajustes** del CRM se define el tipo de cambio y las divisiones. Solo el administrador puede ver estas tablas.
 
 ## Pendiente para las siguientes versiones
 
