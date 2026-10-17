@@ -44,6 +44,9 @@ export const RUBROS: Record<string, Rubro> = {
   minimarket: { e: '🛒', n: 'Minimarket', campos: ['subcategoria', 'stock', 'oferta', 'variantes'],
     unidades: ['Unidad', 'Pack', 'Caja'], categorias: ['Bebidas', 'Abarrotes', 'Limpieza', 'Snacks'],
     variantes: ['500 ml', '1 L', '2 L', '3 L'], etiquetas: [] },
+  inmobiliaria: { e: '🏠', n: 'Inmobiliaria', campos: ['descripcion', 'destacado', 'etiquetas'],
+    unidades: ['Inmueble'], categorias: ['Casas', 'Departamentos', 'Terrenos', 'Oficinas', 'Locales', 'Quintas'],
+    variantes: [], etiquetas: ['Exclusiva', 'Nuevo', 'Oportunidad', 'Precio rebajado', 'Amoblado'] },
   general: { e: '🏪', n: 'General', campos: ['descripcion', 'oferta'],
     unidades: ['Unidad', 'Kg', 'Pack'], categorias: ['General'], variantes: [], etiquetas: [] },
 }

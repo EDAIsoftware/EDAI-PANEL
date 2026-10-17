@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { requireAdmin } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CAMPOS_BASE, CAMPOS_EXTRA, RUBROS, leerConfig, type CampoExtra } from '@/lib/rubros'
-import { PLANES, PLAN_IDS, esPlan } from '@/lib/planes'
+import { PLANES, esPlan, planesDe } from '@/lib/planes'
 import { PANEL_URL, bs, diasHasta, fechaCorta, urlTienda, waLink } from '@/lib/utils'
 import {
   tiendaAlCrm, actualizarDatos, cambiarActivo, cambiarPlan, cambiarRubro, guardarConfig, registrarPago, suspender,
@@ -38,7 +38,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-4xl">
-      <Link href="/admin/tiendas" className="text-sm text-suave underline">← Tiendas</Link>
+      <Link href={t.tipo === 'agente' ? '/admin/agentes' : '/admin/tiendas'} className="text-sm text-suave underline">← {t.tipo === 'agente' ? 'Agentes' : 'Tiendas'}</Link>
       <div className="mt-3 flex flex-wrap items-start gap-3">
         <span className="text-4xl">{RUBROS[t.rubro]?.e ?? '🏪'}</span>
         <div className="flex-1">
@@ -68,7 +68,7 @@ export default async function FichaTienda({ params }: { params: Promise<{ id: st
         <div className="caja flex flex-wrap items-center gap-3 p-4">
           <form key={t.plan} action={cambiarPlan.bind(null, id)} className="flex gap-2">
             <select name="plan" defaultValue={t.plan} className="campo w-auto" aria-label="Plan">
-              {PLAN_IDS.map((p) => <option key={p} value={p}>{PLANES[p].nombre} · {bs(PLANES[p].precio)}/mes</option>)}
+              {planesDe(t.tipo === 'agente' ? 'agente' : 'tienda').map((p) => <option key={p} value={p}>{PLANES[p].nombre} · {bs(PLANES[p].precio)}/mes</option>)}
             </select>
             <button className="btn-borde">Cambiar plan</button>
           </form>

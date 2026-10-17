@@ -49,16 +49,23 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   }
 
   // ---------- Dueño de tienda ----------
-  const { data: tienda } = await supabase.from('tiendas').select('nombre, logo_url, plan, vence_el, tema').eq('id', perfil.tienda_id).maybeSingle()
+  const { data: tienda } = await supabase.from('tiendas').select('nombre, logo_url, plan, vence_el, tema, tipo, perfil').eq('id', perfil.tienda_id).maybeSingle()
   if (!tienda) return <Pausado que="tienda" />
   const planId: string = tienda.plan
   const plan = esPlan(planId) ? PLANES[planId] : PLANES.emprende
   const paleta = PALETAS.includes(tienda.tema?.panel) ? tienda.tema.panel : 'verde'
   return (
     <div data-paleta={paleta} className="min-h-screen bg-fondo text-tinta md:flex">
-      <Lateral marca={tienda.nombre} sub="Tienda por EDAI" logo={tienda.logo_url} usuario={user.email || ''}
+      <Lateral marca={tienda.nombre} sub={tienda.tipo === 'agente' ? 'Página por EDAI' : 'Tienda por EDAI'} logo={tienda.tipo === 'agente' ? (tienda.perfil?.foto || tienda.logo_url) : tienda.logo_url} usuario={user.email || ''}
         pie={`Plan ${plan.nombre} · vence el ${fechaCorta(tienda.vence_el)}`}
-        items={[
+        items={tienda.tipo === 'agente' ? [
+          { href: '/panel', texto: 'Resumen', icono: 'resumen' },
+          { href: '/panel/productos', texto: 'Propiedades', icono: 'casa' },
+          { href: '/panel/contactos', texto: 'Contactos', icono: 'invitados' },
+          { href: '/panel/perfil', texto: 'Mi perfil', icono: 'editar' },
+          { href: '/panel/apariencia', texto: 'Apariencia', icono: 'apariencia' },
+          { href: '/panel/suscripcion', texto: 'Suscripción', icono: 'suscripcion' },
+        ] : [
           { href: '/panel', texto: 'Hoy', icono: 'hoy' },
           { href: '/panel/productos', texto: 'Productos', icono: 'productos' },
           { href: '/panel/ventas', texto: 'Ventas', icono: 'ventas' },

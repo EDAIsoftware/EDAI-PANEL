@@ -26,6 +26,8 @@ export default function AccesoCard({ a, onCerrar }: { a: Acceso; onCerrar?: () =
     ? `Hola ${a.nombre}, para crear tu nueva contraseña del panel de ${a.tienda} entra aquí:\n${a.enlace}\n\nEl enlace sirve una sola vez.`
     : a.esEvento
       ? `Hola ${a.nombre}, ¡bienvenido a EDAI! 💌\n\nTu invitación "${a.tienda}" ya está lista.\n\n1. Crea tu contraseña aquí: ${a.enlace}\n2. Tu usuario es: ${a.correo}\n3. En tu panel ${PANEL_URL} puedes editar tu invitación, cargar tu lista de invitados y ver quién confirma.\n\nTu invitación: ${tienda}\n\nCualquier duda, escríbenos por aquí.`
+      : a.etiquetaPublica === 'Su página'
+        ? `Hola ${a.nombre}, ¡bienvenido a EDAI! 🏠\n\nTu página de asesor inmobiliario ya está lista.\n\n1. Crea tu contraseña aquí: ${a.enlace}\n2. Tu usuario es: ${a.correo}\n3. En tu panel ${PANEL_URL} cargas tus propiedades, tu foto y tus datos.\n\nTu página para compartir con tus clientes: ${tienda}\n\nCualquier duda, escríbenos por aquí.`
       : `Hola ${a.nombre}, ¡bienvenido a EDAI! 🎉\n\nTu tienda ${a.tienda} ya está lista.\n\n1. Crea tu contraseña aquí: ${a.enlace}\n2. Tu usuario es: ${a.correo}\n3. Después entra siempre a tu panel en: ${PANEL_URL}\n\nTu tienda para compartir con tus clientes: ${tienda}\n\nCualquier duda, escríbenos por aquí.`
 
   return (

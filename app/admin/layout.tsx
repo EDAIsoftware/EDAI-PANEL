@@ -22,10 +22,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         items={[
           { grupo: 'Negocio', href: '/admin', texto: 'Resumen', icono: 'resumen' },
           { grupo: 'Negocio', href: '/admin/tiendas', texto: 'Tiendas', icono: 'tiendas' },
+          { grupo: 'Negocio', href: '/admin/agentes', texto: 'Agentes', icono: 'casa' },
           { grupo: 'Negocio', href: '/admin/eventos', texto: 'Invitaciones', icono: 'invitaciones' },
           { grupo: 'Negocio', href: '/admin/oportunidades', texto: 'Oportunidades', icono: 'oportunidades', contador: oportunidades },
           { grupo: 'Negocio', href: '/admin/cobros', texto: 'Cobros', icono: 'cobros', contador: cobros },
           { grupo: 'Negocio', href: '/admin/planes', texto: 'Planes', icono: 'planes' },
+          { grupo: 'Negocio', href: '/admin/demos', texto: 'Demos', icono: 'demo' },
           { grupo: 'CRM', href: '/admin/crm', texto: 'Inicio CRM', icono: 'crm' },
           { grupo: 'CRM', href: '/admin/crm/prospectos', texto: 'Prospectos', icono: 'embudo', contador: seguimientos ?? 0 },
           { grupo: 'CRM', href: '/admin/crm/clientes', texto: 'Clientes', icono: 'invitados' },

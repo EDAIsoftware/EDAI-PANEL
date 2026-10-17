@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { cargarTienda } from '@/lib/tienda'
 import { bs, fechaHora, urlTienda } from '@/lib/utils'
+import ResumenAgente from './ResumenAgente'
 
 export default async function Hoy() {
   const { supabase, tienda } = await cargarTienda()
   if (!tienda) return null
+  if (tienda.tipo === 'agente') return <ResumenAgente tienda={tienda} />
   const hace7 = new Date(Date.now() - 7 * 864e5).toISOString()
   const inicioHoy = new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'America/La_Paz' }) + 'T00:00:00-04:00').toISOString()
 

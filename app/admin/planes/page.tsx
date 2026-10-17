@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/auth'
-import { PLANES, PLAN_IDS } from '@/lib/planes'
+import { PLANES, PLAN_IDS, PLAN_AGENTE_IDS } from '@/lib/planes'
 import { PLANES_EVENTO, PLAN_EVENTO_IDS } from '@/lib/eventos'
 import { bs } from '@/lib/utils'
 
@@ -29,6 +29,25 @@ export default async function Planes() {
               <Item>{p.productos ? `Hasta ${p.productos} productos` : 'Productos ilimitados'}</Item>
               <Item>{p.fotos === 1 ? '1 foto' : `Hasta ${p.fotos} fotos`} por producto</Item>
               <Item>{p.usuarios} {p.usuarios === 1 ? 'usuario' : 'usuarios'} del panel</Item>
+            </ul>
+          </div>) })}
+      </div>
+
+      <h2 className="mb-1 text-xl font-bold">Agentes inmobiliarios</h2>
+      <p className="mb-4 text-sm text-suave">Activación única (incluye el dominio propio y la carga inicial) + mensualidad. El dominio se renueva incluido mientras siga suscrito.</p>
+      <div className="mb-10 grid gap-4 md:grid-cols-2">
+        {PLAN_AGENTE_IDS.map((k) => { const p = PLANES[k]; return (
+          <div key={k} className={`caja p-5 ${k === 'agente_pro' ? 'border-acento' : ''}`}>
+            <div className="flex items-center justify-between"><h3 className="text-lg font-bold">{p.nombre}</h3><span className="chip">{cuenta(t, k)} agentes</span></div>
+            <p className="mt-2 text-3xl font-extrabold">{bs(p.precio)}<small className="text-sm font-medium text-suave"> /mes</small></p>
+            <p className="text-sm text-suave">+ {bs(p.activacion)} de activación (una sola vez) · {bs(p.anual)} al año</p>
+            <ul className="mt-4 space-y-1.5 text-sm">
+              <Item>Dominio propio .com incluido</Item>
+              <Item>Hasta {p.productos} propiedades activas, {p.fotos} fotos cada una</Item>
+              <Item>Página por propiedad para compartir en un solo enlace</Item>
+              <Item>WhatsApp con el código de la propiedad</Item>
+              <Item>Captación de dueños y estadísticas por propiedad</Item>
+              {k === 'agente_pro' && <Item>Diseño alternativo o exclusivo y reporte mensual</Item>}
             </ul>
           </div>) })}
       </div>

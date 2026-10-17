@@ -1,5 +1,5 @@
 import { cargarTienda } from '@/lib/tienda'
-import { PLANES, PLAN_IDS } from '@/lib/planes'
+import { PLANES, planesDe } from '@/lib/planes'
 import { bs, diasHasta, fechaCorta, waLink } from '@/lib/utils'
 
 const EDAI_WA = process.env.NEXT_PUBLIC_EDAI_WHATSAPP || ''
@@ -25,7 +25,7 @@ export default async function Suscripcion() {
 
       <h2 className="mb-3 text-lg font-bold">Planes disponibles</h2>
       <div className="grid gap-4 md:grid-cols-3">
-        {PLAN_IDS.map((k) => { const p = PLANES[k]; const actual = p.nombre === plan.nombre; return (
+        {planesDe(tienda.tipo === 'agente' ? 'agente' : 'tienda').map((k) => { const p = PLANES[k]; const actual = p.nombre === plan.nombre; return (
           <div key={k} className={`caja p-5 ${actual ? 'border-acento' : ''}`}>
             <div className="flex items-center justify-between"><b className="text-lg">{p.nombre}</b>{actual && <span className="chip">Tu plan</span>}</div>
             <p className="mt-2 text-2xl font-extrabold">{bs(p.precio)}<small className="text-sm font-medium text-suave"> /mes</small></p>

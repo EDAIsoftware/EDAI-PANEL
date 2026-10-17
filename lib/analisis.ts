@@ -8,9 +8,10 @@ export type FilaTienda = {
   plan_precio: number; max_productos: number | null; vence_el: string; suspendida: boolean; whatsapp: string | null
   dueno_nombre: string | null; productos: number; ventas_30d: number; ventas_30d_previos: number; pedidos_30d: number
   visitas_30d: number; creado_en: string
+  tipo?: 'tienda' | 'agente'; contactos_30d?: number; whatsapp_30d?: number; perfil?: Record<string, string> | null
 }
 export type Estado = { k: 'activa' | 'por-vencer' | 'vencida' | 'suspendida'; txt: string; cls: string }
-export type Analisis = FilaTienda & {
+export type Analisis = Omit<FilaTienda, 'tipo'> & {
   estado: Estado; tendencia: number | null; uso: number; ultimoIngreso: string | null
   tipo: 'subir' | 'riesgo' | null; motivos: string[]; siguiente: PlanId | null
 }
@@ -42,13 +43,13 @@ export async function analizarTiendas(filas: FilaTienda[]): Promise<Analisis[]> 
     const ultimoIngreso = ingresoDe.get(t.id) ?? null
     const sinEntrar = ultimoIngreso ? -diasHasta(ultimoIngreso.slice(0, 10)) : null
     const antiguedad = -diasHasta(t.creado_en.slice(0, 10))
-    const siguiente: PlanId | null = planId === 'emprende' ? 'negocio' : planId === 'negocio' ? 'empresa' : null
+    const siguiente: PlanId | null = planId === 'emprende' ? 'negocio' : planId === 'negocio' ? 'empresa' : planId === 'agente' ? 'agente_pro' : null
 
     const riesgo: string[] = []
     if (tendencia !== null && tendencia <= -25) riesgo.push(`Sus ventas cayeron ${-tendencia}% este mes`)
     if (sinEntrar !== null && sinEntrar >= 14) riesgo.push(`No entra a su panel hace ${sinEntrar} días`)
     if (ultimoIngreso === null && antiguedad >= 7) riesgo.push('Todavía no entró a su panel')
-    if (antiguedad >= 30 && t.visitas_30d < 30) riesgo.push('Muy pocas visitas a su tienda')
+    if (antiguedad >= 30 && t.visitas_30d < 30) riesgo.push(t.tipo === 'agente' ? 'Muy pocas visitas a su página' : 'Muy pocas visitas a su tienda')
 
     const subir: string[] = []
     if (siguiente) {

@@ -8,12 +8,13 @@ type P = {
   id: string; numero: number; nombre: string; precio: number; precio_oferta: number | null; categoria: string | null
   subcategoria: string | null; unidad: string; fotos: string[]; disponible: boolean; stock: number | null
   codigo: string | null; marca: string | null
+  operacion?: string | null; zona?: string | null; moneda?: 'BOB' | 'USD'; estado_inmueble?: string; dormitorios?: number | null; construido?: number | null
 }
 
 const normal = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
-export default function ListaProductos({ productos, prefijo, emoji, usaStock, usaOferta }: {
-  productos: P[]; prefijo: string; emoji: string; usaStock: boolean; usaOferta: boolean
+export default function ListaProductos({ productos, prefijo, emoji, usaStock, usaOferta, inmueble = false }: {
+  productos: P[]; prefijo: string; emoji: string; usaStock: boolean; usaOferta: boolean; inmueble?: boolean
 }) {
   const [q, setQ] = useState('')
   const [filtro, setFiltro] = useState<'todos' | 'disponibles' | 'ocultos' | 'agotados'>('todos')
@@ -57,12 +58,14 @@ export default function ListaProductos({ productos, prefijo, emoji, usaStock, us
               <span className="ml-2 rounded border border-linea bg-sup2 px-1.5 text-xs font-bold text-suave">{codigoEdai(prefijo, p.numero)}</span>
               {p.codigo && <span className="ml-1 text-xs text-suave">· tu código {p.codigo}</span>}
               <small className="block text-suave">
-                {[p.categoria, 'por ' + p.unidad, !p.disponible ? 'oculto' : null,
+                {inmueble ? [p.operacion, p.categoria, p.zona, p.dormitorios ? `${p.dormitorios} dorm.` : null, p.construido ? `${Number(p.construido)} m²` : null,
+                  p.estado_inmueble !== 'Disponible' ? p.estado_inmueble : null, !p.disponible ? 'oculta' : null].filter(Boolean).join(' · ') : [p.categoria, 'por ' + p.unidad, !p.disponible ? 'oculto' : null,
                   usaStock && p.stock !== null ? (agotado(p) ? 'agotado' : `${Number(p.stock)} en stock`) : null].filter(Boolean).join(' · ')}
               </small>
             </div>
             <span className="chip">
-              {usaOferta && p.precio_oferta !== null ? <><s className="mr-1 font-medium text-suave">{bs(p.precio)}</s>{bs(p.precio_oferta)}</> : bs(p.precio)}
+              {inmueble ? `${p.moneda === 'USD' ? '$' : 'Bs.'} ${Number(p.precio).toLocaleString('es-BO')}`
+                : usaOferta && p.precio_oferta !== null ? <><s className="mr-1 font-medium text-suave">{bs(p.precio)}</s>{bs(p.precio_oferta)}</> : bs(p.precio)}
             </span>
           </Link>
         ))}

@@ -35,14 +35,18 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
   const correo = String(form.get('correo') || '').trim().toLowerCase()
   const whatsapp = soloDigitos(String(form.get('whatsapp') || ''))
   const ciudad = String(form.get('ciudad') || '').trim()
-  const plan = String(form.get('plan') || 'emprende')
-  const rubro = String(form.get('rubro') || 'general')
+  const tipo = form.get('tipo') === 'agente' ? 'agente' : 'tienda'
+  const plan = String(form.get('plan') || (tipo === 'agente' ? 'agente' : 'emprende'))
+  const rubro = tipo === 'agente' ? 'inmobiliaria' : String(form.get('rubro') || 'general')
+  const inmobiliaria = String(form.get('inmobiliaria') || '').trim()
   const slug = slugify(String(form.get('slug') || '') || nombre)
+  const RESERVADOS = ['admin', 'panel', 'invitaciones', 'demos', 'www', 'api', 'app', 'mail']
 
   if (!nombre) return { ok: false, error: 'Escribe el nombre de la tienda.' }
   if (!correoValido(correo)) return { ok: false, error: 'Escribe un correo válido para el dueño.' }
   if (slug.length < 3) return { ok: false, error: 'La dirección de la tienda necesita al menos 3 letras.' }
-  if (!esPlan(plan)) return { ok: false, error: 'Plan no válido.' }
+  if (RESERVADOS.includes(slug)) return { ok: false, error: `La dirección "${slug}" está reservada. Elige otra.` }
+  if (!esPlan(plan) || PLANES[plan].tipo !== tipo) return { ok: false, error: 'Plan no válido.' }
   if (!RUBROS[rubro]) return { ok: false, error: 'Rubro no válido.' }
 
   // Prefijo de los códigos de producto (único entre todas las tiendas)
@@ -59,7 +63,8 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
   }
 
   const { data: tienda, error } = await supabase.from('tiendas').insert({
-    nombre, slug, prefijo, dueno_nombre: dueno, whatsapp, ciudad, plan, rubro, config: configDeRubro(rubro),
+    nombre, slug, prefijo, dueno_nombre: dueno || (tipo === 'agente' ? nombre : ''), whatsapp, ciudad, plan, rubro, config: configDeRubro(rubro),
+    tipo, perfil: tipo === 'agente' ? { inmobiliaria, cargo: 'Asesor inmobiliario' } : {},
   }).select('id').single()
   if (error || !tienda) {
     const msg = error?.message || ''
@@ -74,7 +79,7 @@ export async function crearTienda(_prev: Resultado, form: FormData): Promise<Res
     const { error: e2 } = await admin.from('perfiles').insert({ user_id: userId, rol: 'dueno', tienda_id: tienda.id, nombre: dueno, correo })
     if (e2) throw new Error(e2.message)
     await vincularCrm(supabase, { tipo: 'tienda', id: tienda.id, crmId: String(form.get('crm_cliente_id') || '') || null,
-      nombre: dueno || nombre, empresa: nombre, telefono: whatsapp, email: correo })
+      nombre: dueno || nombre, empresa: tipo === 'agente' ? (inmobiliaria || null) : nombre, telefono: whatsapp, email: correo })
     revalidatePath('/admin', 'layout')
     return { ok: true, tiendaId: tienda.id, tienda: nombre, slug, nombre: dueno, correo, whatsapp, enlace, tipo: 'invitacion' }
   } catch (e) {

@@ -11,7 +11,13 @@ type Producto = {
   precio_oferta: number | null; categoria: string | null; subcategoria: string | null; unidad: string
   fotos: string[]; disponible: boolean; stock: number | null; destacado: boolean; variantes: string[]
   etiquetas: string[]; minimo: string | null; peso: string | null; codigo: string | null; marca: string | null
+  // Inmuebles (agentes)
+  operacion?: string | null; zona?: string | null; moneda?: 'BOB' | 'USD'; terreno?: number | null; construido?: number | null
+  dormitorios?: number | null; banos?: number | null; parqueos?: number | null; estado_inmueble?: string
 }
+
+const OPERACIONES = ['Venta', 'Alquiler', 'Anticrético', 'Preventa']
+const ESTADOS_INMUEBLE = ['Disponible', 'Reservado', 'Vendido', 'Alquilado']
 
 // Achica la foto en el navegador antes de subirla (máx. 1000 px, JPG)
 function comprimir(file: File): Promise<Blob> {
@@ -30,9 +36,10 @@ function comprimir(file: File): Promise<Blob> {
   })
 }
 
-export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, prefijo, producto }: {
-  tiendaId: string; config: ConfigTienda; maxFotos: number; siguiente: number; prefijo: string; producto?: Producto
+export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, prefijo, producto, inmueble = false }: {
+  tiendaId: string; config: ConfigTienda; maxFotos: number; siguiente: number; prefijo: string; producto?: Producto; inmueble?: boolean
 }) {
+  const palabra = inmueble ? 'propiedad' : 'producto'
   const router = useRouter()
   const supabase = createClient()
   const on = (k: ConfigTienda['campos'][number]) => config.campos.includes(k)
@@ -40,6 +47,7 @@ export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, pr
     nombre: '', descripcion: null, precio: null, precio_oferta: null, categoria: config.categorias[0] ?? null,
     subcategoria: null, unidad: config.unidades[0] ?? 'Unidad', fotos: [], disponible: true, stock: null,
     destacado: false, variantes: [], etiquetas: [], minimo: null, peso: null, codigo: null, marca: null,
+    ...(inmueble ? { operacion: 'Venta', moneda: 'USD' as const, estado_inmueble: 'Disponible' } : {}),
   })
   const [subiendo, setSubiendo] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -109,7 +117,7 @@ export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, pr
 
   return (
     <div className="max-w-3xl">
-      <h1 className="titulo">{producto ? 'Editar producto' : 'Agregar producto'}</h1>
+      <h1 className="titulo">{producto ? `Editar ${palabra}` : `Agregar ${palabra}`}</h1>
       <p className="subtitulo">Solo el nombre y el precio son obligatorios</p>
       <div className="caja grid gap-4 p-5 sm:grid-cols-2">
         <div><span className="etiqueta">Código EDAI</span>
@@ -119,12 +127,30 @@ export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, pr
           <input id="cod" className="campo" value={p.codigo ?? ''} placeholder="El que usas en tu negocio o de barras" maxLength={40}
             onChange={(e) => set('codigo', e.target.value.trim() ? e.target.value : null)} /></div>
         <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nombre">Nombre</label><input id="nombre" className="campo" value={p.nombre} onChange={(e) => set('nombre', e.target.value)} /></div>
-        <div><label className="etiqueta" htmlFor="precio">Precio (Bs.)</label><input id="precio" type="number" min="0" step="0.5" className="campo" value={p.precio ?? ''} onChange={(e) => set('precio', num(e.target.value))} /></div>
+        {inmueble ? (
+          <div className="grid grid-cols-[80px_1fr] gap-2">
+            <div><label className="etiqueta" htmlFor="moneda">Moneda</label>
+              <select id="moneda" className="campo" value={p.moneda ?? 'USD'} onChange={(e) => set('moneda', e.target.value as 'BOB' | 'USD')}><option value="USD">$</option><option value="BOB">Bs.</option></select></div>
+            <div><label className="etiqueta" htmlFor="precio">{p.operacion === 'Alquiler' ? 'Precio por mes' : 'Precio'}</label><input id="precio" type="number" min="0" step="1" className="campo" value={p.precio ?? ''} onChange={(e) => set('precio', num(e.target.value))} /></div>
+          </div>
+        ) : <div><label className="etiqueta" htmlFor="precio">Precio (Bs.)</label><input id="precio" type="number" min="0" step="0.5" className="campo" value={p.precio ?? ''} onChange={(e) => set('precio', num(e.target.value))} /></div>}
         <div><label className="etiqueta" htmlFor="cat">Categoría</label>
           <select id="cat" className="campo" value={p.categoria ?? ''} onChange={(e) => set('categoria', e.target.value)}>
             {config.categorias.map((c) => <option key={c}>{c}</option>)}
           </select></div>
-        {config.unidades.length > 1 && <div className="sm:col-span-2"><span className="etiqueta">Se vende por</span>
+        {inmueble && <>
+          <div className="sm:col-span-2"><span className="etiqueta">Operación</span>
+            <div className="flex flex-wrap gap-2">{OPERACIONES.map((o) => <button type="button" key={o} className={pastilla(p.operacion === o)} onClick={() => set('operacion', o)}>{o}</button>)}</div></div>
+          <div><label className="etiqueta" htmlFor="zona">Zona / barrio</label><input id="zona" className="campo" value={p.zona ?? ''} placeholder="Ej: Equipetrol" onChange={(e) => set('zona', e.target.value || null)} /></div>
+          <div><span className="etiqueta">Estado</span>
+            <select className="campo" value={p.estado_inmueble ?? 'Disponible'} onChange={(e) => set('estado_inmueble', e.target.value)} aria-label="Estado">{ESTADOS_INMUEBLE.map((x) => <option key={x}>{x}</option>)}</select></div>
+          <div className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-5">
+            {([['terreno', 'Terreno m²'], ['construido', 'Construido m²'], ['dormitorios', 'Dormitorios'], ['banos', 'Baños'], ['parqueos', 'Parqueos']] as const).map(([k, t]) => (
+              <div key={k}><label className="etiqueta" htmlFor={k}>{t}</label><input id={k} type="number" min="0" step={k === 'banos' ? '0.5' : '1'} className="campo" value={p[k] ?? ''} onChange={(e) => set(k, num(e.target.value))} /></div>
+            ))}
+          </div>
+        </>}
+        {!inmueble && config.unidades.length > 1 && <div className="sm:col-span-2"><span className="etiqueta">Se vende por</span>
           <div className="flex flex-wrap gap-2">{config.unidades.map((u) => <button type="button" key={u} className={pastilla(p.unidad === u)} onClick={() => set('unidad', u)}>{u}</button>)}</div></div>}
 
         <div className="sm:col-span-2"><span className="etiqueta">Fotos ({p.fotos.length} de {maxFotos})</span>
@@ -149,7 +175,7 @@ export default function ProductoForm({ tiendaId, config, maxFotos, siguiente, pr
           <p className="mt-1.5 text-xs text-suave">Tu plan permite {maxFotos} foto(s) por producto. La primera es la que se ve en la tienda.</p></div>
 
         <label className="flex cursor-pointer items-center justify-between rounded-lg border border-linea bg-sup2 px-3 py-2.5 sm:col-span-2">
-          <span><b className="block">Disponible</b><small className="text-suave">Apágalo para ocultarlo de la tienda</small></span>
+          <span><b className="block">{inmueble ? 'Publicada' : 'Disponible'}</b><small className="text-suave">{inmueble ? 'Apágalo para ocultarla de tu página' : 'Apágalo para ocultarlo de la tienda'}</small></span>
           <input type="checkbox" className="h-5 w-5 accent-acento" checked={p.disponible} onChange={(e) => set('disponible', e.target.checked)} /></label>
 
         {on('descripcion') && <div className="sm:col-span-2"><label className="etiqueta" htmlFor="desc">Descripción</label><textarea id="desc" className="campo min-h-[70px]" value={p.descripcion ?? ''} onChange={(e) => set('descripcion', e.target.value || null)} /></div>}

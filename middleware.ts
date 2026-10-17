@@ -20,6 +20,7 @@ function destino(host: string, path: string): { ruta: string | null; esTienda: b
 
   if (host === `admin.${ROOT}`) return { ruta: path.startsWith('/admin') ? null : `/admin${sufijo}`, esTienda: false }
   if (host === `panel.${ROOT}`) return { ruta: path.startsWith('/panel') ? null : `/panel${sufijo}`, esTienda: false }
+  if (host === `demos.${ROOT}`) return { ruta: path.startsWith('/demo/') ? null : `/demo${sufijo}`, esTienda: true }
   if (host === `invitaciones.${ROOT}`) return { ruta: path.startsWith('/i/') ? null : `/i${sufijo}`, esTienda: true }
 
   if (host.endsWith(`.${ROOT}`)) {

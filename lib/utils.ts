@@ -38,6 +38,7 @@ export const waLink = (tel: string, texto: string) =>
 
 export const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'edaisoftware.com'
 export const PANEL_URL = process.env.NEXT_PUBLIC_PANEL_URL || 'https://panel.' + ROOT
+export const DEMOS_URL = process.env.NEXT_PUBLIC_DEMOS_URL || 'https://demos.' + ROOT
 export const INVITACIONES_URL = process.env.NEXT_PUBLIC_INVITACIONES_URL || 'https://invitaciones.' + ROOT
 export const urlInvitacion = (slug: string, codigo?: string | null) =>
   `${INVITACIONES_URL}/${slug}${codigo ? `?p=${codigo}` : ''}`

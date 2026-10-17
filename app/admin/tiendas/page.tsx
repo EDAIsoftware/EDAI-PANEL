@@ -9,7 +9,7 @@ export default async function AdminTiendas({ searchParams }: { searchParams: Pro
   const { q = '', estado = '', plan = '' } = await searchParams
   const { supabase } = await requireAdmin()
   const { data } = await supabase.from('admin_resumen').select('*').order('ventas_30d', { ascending: false })
-  const todas = (data ?? []) as FilaTienda[]
+  const todas = ((data ?? []) as FilaTienda[]).filter((x) => x.tipo !== 'agente')
   const t = q.trim().toLowerCase()
   const tiendas = todas.filter((x) => (!t || [x.nombre, x.ciudad, x.dueno_nombre, x.slug].some((v) => v && String(v).toLowerCase().includes(t)))
     && (!estado || estadoDe(x).k === estado) && (!plan || x.plan === plan))
