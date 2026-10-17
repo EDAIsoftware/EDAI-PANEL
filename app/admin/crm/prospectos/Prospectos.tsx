@@ -9,7 +9,11 @@ import { waLink } from '@/lib/utils'
 
 const COLOR: Record<Etapa, string> = { Nuevo: 'bg-sup2', Contactado: 'bg-sup2', Demo: 'bg-sup2', Propuesta: 'bg-sup2', Ganado: 'bg-chip', Perdido: 'bg-malofondo' }
 
-export default function Prospectos({ inicial, servicios, divisiones }: { inicial: Prospecto[]; servicios: Servicio[]; divisiones: Division[] }) {
+type ResumenDemo = { enviadas: number; aperturas: number; ultima: string | null }
+
+export default function Prospectos({ inicial, servicios, divisiones, demos = {} }: {
+  inicial: Prospecto[]; servicios: Servicio[]; divisiones: Division[]; demos?: Record<string, ResumenDemo>
+}) {
   const router = useRouter()
   const sb = useMemo(() => createClient(), [])
   const [lista, setLista] = useState(inicial)
@@ -111,6 +115,8 @@ export default function Prospectos({ inicial, servicios, divisiones }: { inicial
                         {(s || p.valor) && <small className="mt-1 block">{s?.nombre}{s && p.valor ? ' · ' : ''}{p.valor ? dinero(p.valor, p.moneda) : ''}</small>}
                         {p.proxima_accion && <small className={`mt-1 block ${vencida ? 'font-semibold text-malo' : 'text-suave'}`}>→ {p.proxima_accion}{p.proxima_fecha ? ` · ${p.proxima_fecha === hoy ? 'hoy' : p.proxima_fecha}` : ''}</small>}
                         {p.etapa === 'Perdido' && p.motivo_perdida && <small className="mt-1 block text-malo">Motivo: {p.motivo_perdida}</small>}
+                        {demos[p.id] && <small className={`mt-1 block font-semibold ${demos[p.id].aperturas ? 'text-chiptinta' : 'text-aviso'}`}>
+                          {demos[p.id].aperturas ? `👁 Abrió la demo ${demos[p.id].aperturas} ${demos[p.id].aperturas === 1 ? 'vez' : 'veces'}` : 'Demo enviada, sin abrir'}</small>}
                       </button>
                       <div className="mt-2 flex gap-1.5">
                         <select aria-label="Mover a etapa" className="flex-1 rounded-md border border-linea bg-sup px-2 py-1 text-xs" value={p.etapa} onChange={(e) => mover(p, e.target.value as Etapa)}>
@@ -154,6 +160,7 @@ export default function Prospectos({ inicial, servicios, divisiones }: { inicial
           {err && <p role="alert" className="mt-3 text-sm text-malo">{err}</p>}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
             {form.id && <button className="btn-borde mr-auto text-malo" onClick={() => eliminar(form as Prospecto)}>Eliminar</button>}
+            {form.id && <a className="btn-borde" href={`/admin/demos?prospecto=${form.id}`}>Enviar una demo</a>}
             {form.id && !form.cliente_id && <button className="btn-borde" onClick={() => convertir(form as Prospecto)}>Convertir en cliente</button>}
             <button className="btn-borde" onClick={() => setForm(null)}>Cancelar</button>
             <button className="btn-primario" onClick={guardar}>Guardar</button>

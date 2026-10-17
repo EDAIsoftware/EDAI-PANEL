@@ -11,10 +11,12 @@ import {
 } from '@/lib/crm'
 import { urlInvitacion, urlTienda, waLink } from '@/lib/utils'
 
+export type DemoEnviada = { id: string; aperturas: number; ultima_apertura: string | null; creado_en: string; demos: { titulo: string; slug: string } | null }
+
 const chipEstado = (e: string) => (e === 'Entregado' ? 'chip' : e === 'Cancelado' ? 'chip-malo' : 'chip-aviso')
 
-export default function FichaCliente({ cliente: c, ventas, pagos, actividades, tc, divisiones, servicios, clientes, tiendas, eventos, nuevaVenta }: {
-  cliente: Cliente; ventas: Venta[]; pagos: Pago[]; actividades: Actividad[]; tc: number; divisiones: Division[]; servicios: Servicio[]
+export default function FichaCliente({ cliente: c, ventas, pagos, actividades, demos = [], tc, divisiones, servicios, clientes, tiendas, eventos, nuevaVenta }: {
+  cliente: Cliente; ventas: Venta[]; pagos: Pago[]; actividades: Actividad[]; demos?: DemoEnviada[]; tc: number; divisiones: Division[]; servicios: Servicio[]
   clientes: Pick<Cliente, 'id' | 'nombre' | 'empresa'>[]
   tiendas: { id: string; nombre: string; slug: string; plan: string; vence_el: string; suspendida: boolean }[]
   eventos: { id: string; nombre: string; slug: string; fecha: string; plan: string; pagado: boolean }[]
@@ -156,6 +158,18 @@ export default function FichaCliente({ cliente: c, ventas, pagos, actividades, t
               <div className="flex flex-wrap items-center gap-2 p-4"><span className="flex-1 text-sm text-suave">No tiene invitación digital.</span>
                 <Link className="btn-borde btn-sm" href={`/admin/eventos/nuevo?cliente=${c.id}`}>Crear invitación</Link></div>
             )}
+          </div>
+
+          <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold">Demos enviadas</h2>
+            <Link className="btn-borde btn-sm" href={`/admin/demos?cliente=${c.id}`}>Enviar demo</Link></div>
+          <div className="caja mb-6">
+            {demos.length === 0 && <p className="p-4 text-sm text-suave">Todavía no le enviaste ninguna demo.</p>}
+            {demos.map((d) => (
+              <div key={d.id} className="flex items-center gap-2 border-t border-linea px-4 py-2.5 text-sm first:border-t-0">
+                <span className="min-w-0 flex-1"><b>{d.demos?.titulo ?? 'Demo eliminada'}</b> <small className="text-suave">· {d.creado_en.slice(0, 10)}</small></span>
+                {d.aperturas ? <span className="chip">Abrió {d.aperturas} {d.aperturas === 1 ? 'vez' : 'veces'}</span> : <span className="chip-aviso">Sin abrir</span>}
+              </div>
+            ))}
           </div>
 
           <h2 className="mb-3 text-lg font-bold">Datos</h2>
